@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 快活娛樂城</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        h1 {
+            color: #ffd700;
+            font-size: 3rem;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        .subtitle {
+            color: #aaa;
+            font-size: 1.2rem;
+        }
+        .player-info {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .chips {
+            color: #ffd700;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .game-card {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.1);
+            border-color: #ffd700;
+        }
+        .game-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        .game-name {
+            font-size: 1.5rem;
+            margin: 10px 0;
+            color: #ffd700;
+        }
+        .game-desc {
+            color: #aaa;
+            margin-bottom: 15px;
+        }
+        .bet-range {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .warning {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255, 100, 100, 0.1);
+            border: 1px solid #ff6b6b;
+            border-radius: 10px;
+            text-align: center;
+            color: #ff6b6b;
+        }
+        .api-status {
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎰 快活娛樂城</h1>
+            <p class="subtitle">純屬娛樂 · 虛擬 USDT · 切勿沉迷</p>
+        </header>
+        
+        <div class="player-info">
+            <div>
+                <div>玩家 ID: <span id="player-id">載入中...</span></div>
+                <div>勝/負: <span id="player-stats">0/0</span></div>
+            </div>
+            <div class="chips">籌碼: <span id="player-chips">1000</span> USDT</div>
+        </div>
+        
+        <div class="games-grid">
+            <div class="game-card" onclick="window.location.href='/baccarat.html'">
+                <div class="game-icon">🎲</div>
+                <div class="game-name">開心百家樂</div>
+                <div class="game-desc">經典卡牌遊戲，考驗運氣與策略</div>
+                <div class="bet-range">下注範圍: 50 - 5000 USDT</div>
+            </div>
+            
+            <div class="game-card" onclick="window.location.href='/slots.html'">
+                <div class="game-icon">🎰</div>
+                <div class="game-name">幸運老虎機</div>
+                <div class="game-desc">簡單刺激的拉霸遊戲</div>
+                <div class="bet-range">下注範圍: 10 - 1000 USDT</div>
+            </div>
+        </div>
+        
+        <div class="api-status">
+            API 狀態: <span id="api-status">檢查中...</span>
+        </div>
+        
+        <div class="warning">
+            ⚠️ 重要提醒：本遊戲使用虛擬 USDT，僅供娛樂學習用途。<br>
+            嚴禁未成年人參與，請勿沉迷遊戲。遊戲有風險，下注需謹慎。
+        </div>
+    </div>
+    
+    <script>
+        // 載入玩家資訊
+        async function loadPlayerInfo() {
+            try {
+                const response = await fetch('/api/player');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('player-id').textContent = 
+                        data.player.username || `玩家_${data.player.id}`;
+                    document.getElementById('player-chips').textContent = 
+                        data.player.chips;
+                    document.getElementById('player-stats').textContent = 
+                        `${data.player.wins}/${data.player.losses}`;
+                }
+            } catch (error) {
+                console.log('玩家資訊載入失敗，使用遊客模式');
+            }
+        }
+        
+        // 檢查 API 狀態
+        async function checkAPI() {
+            try {
+                const response = await fetch('/api');
+                const data = await response.json();
+                document.getElementById('api-status').textContent = '✅ 正常';
+                document.getElementById('api-status').style.color = '#4CAF50';
+            } catch (error) {
+                document.getElementById('api-status').textContent = '❌ 異常';
+                document.getElementById('api-status').style.color = '#ff6b6b';
+            }
+        }
+        
+        // 初始化
+        window.onload = async () => {
+            await loadPlayerInfo();
+            await checkAPI();
+        };
+    </script>
+</body>
+</html>
