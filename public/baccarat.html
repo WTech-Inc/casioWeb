@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>開心百家樂 - 快活娛樂城</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Arial', sans-serif; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white; 
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { color: #ffd700; font-size: 2.5rem; margin-bottom: 10px; }
+        .subtitle { color: #ccc; font-size: 1.2rem; }
+        
+        .player-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .chips { 
+            color: #ffd700; 
+            font-size: 1.5rem; 
+            font-weight: bold;
+        }
+        
+        .game-area {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        
+        .cards-display {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+        }
+        
+        .player-section, .banker-section {
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+        .player-section { background: rgba(0, 100, 255, 0.2); border: 2px solid #0066ff; }
+        .banker-section { background: rgba(255, 50, 50, 0.2); border: 2px solid #ff3232; }
+        
+        .cards {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .card {
+            width: 80px;
+            height: 120px;
+            background: white;
+            color: black;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .player-card { border: 3px solid #0066ff; }
+        .banker-card { border: 3px solid #ff3232; }
+        
+        .betting-panel {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+        }
+        
+        .bet-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .bet-button {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .bet-button:hover { transform: translateY(-2px); }
+        
+        .bet-player { background: #0066ff; color: white; }
+        .bet-banker { background: #ff3232; color: white; }
+        .bet-tie { background: #00cc66; color: white; }
+        .bet-button.active { 
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            border: 3px solid #ffd700;
+        }
+        
+        .bet-amount {
+            margin: 20px 0;
+        }
+        .amount-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .amount-button {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        .amount-button:hover { background: rgba(255, 255, 255, 0.3); }
+        
+        #place-bet {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #ffd700, #ff9900);
+            color: #1a1a2e;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .result-display {
+            text-align: center;
+            font-size: 1.8rem;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255, 215, 0, 0.2);
+        }
+        
+        .history-panel {
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .game-area { grid-template-columns: 1fr; }
+            .bet-options { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎰 開心百家樂</h1>
+            <p class="subtitle">快活娛樂城 · 純屬娛樂 · 注意投放適當金錢</p>
+        </header>
+        
+        <div class="player-info">
+            <div>
+                <div>玩家 ID: <span id="player-id">載入中...</span></div>
+                <div>勝/負: <span id="player-stats">0/0</span></div>
+            </div>
+            <div class="chips">籌碼: <span id="player-chips">1000</span> 💰</div>
+        </div>
+        
+        <div class="game-area">
+            <div class="cards-display">
+                <div class="player-section">
+                    <h2>👤 閒家</h2>
+                    <div class="cards" id="player-cards">
+                        <!-- 卡片會在這裡動態生成 -->
+                    </div>
+                    <div class="points">點數: <span id="player-points">0</span></div>
+                </div>
+                
+                <div class="banker-section">
+                    <h2>🏦 莊家</h2>
+                    <div class="cards" id="banker-cards">
+                        <!-- 卡片會在這裡動態生成 -->
+                    </div>
+                    <div class="points">點數: <span id="banker-points">0</span></div>
+                </div>
+                
+                <div class="result-display" id="result-display">
+                    請下注開始遊戲
+                </div>
+            </div>
+            
+            <div class="betting-panel">
+                <h3>💰 下注區</h3>
+                
+                <div class="bet-options">
+                    <button class="bet-button bet-player" onclick="selectBet('player')">下注閒家 1:1</button>
+                    <button class="bet-button bet-banker" onclick="selectBet('banker')">下注莊家 0.95:1</button>
+                    <button class="bet-button bet-tie" onclick="selectBet('tie')">下注和局 8:1</button>
+                </div>
+                
+                <div class="bet-amount">
+                    <h4>下注金額</h4>
+                    <div class="amount-buttons">
+                        <button class="amount-button" onclick="setAmount(50)">50</button>
+                        <button class="amount-button" onclick="setAmount(100)">100</button>
+                        <button class="amount-button" onclick="setAmount(200)">200</button>
+                        <button class="amount-button" onclick="setAmount(500)">500</button>
+                        <button class="amount-button" onclick="setAmount(1000)">1000</button>
+                        <button class="amount-button" onclick="setAmount(2000)">2000</button>
+                    </div>
+                    <input type="number" id="bet-amount" value="100" min="50" max="5000" 
+                           style="width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: none;">
+                </div>
+                
+                <button id="place-bet" onclick="placeBet()">🎯 確認下注</button>
+                
+                <div style="margin-top: 20px; color: #ccc; font-size: 0.9rem;">
+                    <p>📌 遊戲規則：</p>
+                    <ul style="margin-left: 20px;">
+                        <li>點數計算：A=1點，2-9=牌面點數，10/J/Q/K=0點</li>
+                        <li>只取個位數，例：7+8=15 → 5點</li>
+                        <li>莊家贏抽水5%，和局1賠8</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="history-panel">
+            <h3>📜 最近紀錄</h3>
+            <div id="game-history">
+                <p>載入中...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let playerId = null;
+        let currentBet = 'player';
+        let betAmount = 100;
+        
+        // 初始化
+        async function init() {
+            await loadPlayerInfo();
+            loadGameHistory();
+        }
+        
+        // 載入玩家資訊
+        async function loadPlayerInfo() {
+            try {
+                const response = await fetch('/api/player');
+                const data = await response.json();
+                
+                if (data.success) {
+                    playerId = data.sessionId;
+                    document.getElementById('player-id').textContent = 
+                        data.player.username || `玩家_${data.player.id}`;
+                    document.getElementById('player-chips').textContent = 
+                        data.player.chips;
+                    document.getElementById('player-stats').textContent = 
+                        `${data.player.wins}/${data.player.losses}`;
+                }
+            } catch (error) {
+                console.error('載入玩家資訊失敗:', error);
+            }
+        }
+        
+        // 選擇下注選項
+        function selectBet(type) {
+            currentBet = type;
+            
+            // 移除所有 active 類別
+            document.querySelectorAll('.bet-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 添加 active 類別到選中的按鈕
+            document.querySelector(`.bet-${type}`).classList.add('active');
+        }
+        
+        // 設定下注金額
+        function setAmount(amount) {
+            betAmount = amount;
+            document.getElementById('bet-amount').value = amount;
+        }
+        
+        // 下注
+        async function placeBet() {
+            if (!playerId) {
+                alert('請等待玩家資訊載入完成');
+                return;
+            }
+            
+            const amount = parseInt(document.getElementById('bet-amount').value);
+            if (amount < 50 || amount > 5000) {
+                alert('下注金額必須在 50 到 5000 之間');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/baccarat/bet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Player-ID': playerId
+                    },
+                    body: JSON.stringify({
+                        betOn: currentBet,
+                        amount: amount
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // 顯示遊戲結果
+                    displayGameResult(result);
+                    // 更新玩家資訊
+                    await loadPlayerInfo();
+                    // 更新歷史紀錄
+                    loadGameHistory();
+                } else {
+                    alert(result.error || '下注失敗');
+                }
+            } catch (error) {
+                console.error('下注失敗:', error);
+                alert('網路錯誤，請稍後再試');
+            }
+        }
+        
+        // 顯示遊戲結果
+        function displayGameResult(result) {
+            const { gameResult, betDetails } = result;
+            
+            // 顯示卡片
+            displayCards('player-cards', gameResult.playerCards, 'player-card');
+            displayCards('banker-cards', gameResult.bankerCards, 'banker-card');
+            
+            // 顯示點數
+            document.getElementById('player-points').textContent = gameResult.playerPoints;
+            document.getElementById('banker-points').textContent = gameResult.bankerPoints;
+            
+            // 顯示結果
+            const resultDisplay = document.getElementById('result-display');
+            let resultText = gameResult.result;
+            
+            if (betDetails.winAmount > 0) {
+                resultText += ` | 🎉 贏得 ${betDetails.winAmount} 籌碼！`;
+                resultDisplay.style.background = 'rgba(0, 255, 0, 0.2)';
+            } else {
+                resultText += ` | 損失 ${betDetails.betAmount} 籌碼`;
+                resultDisplay.style.background = 'rgba(255, 0, 0, 0.2)';
+            }
+            
+            resultDisplay.textContent = resultText;
+            
+            // 重置下注按鈕
+            setTimeout(() => {
+                document.querySelectorAll('.bet-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.getElementById('bet-amount').value = 100;
+            }, 2000);
+        }
+        
+        // 顯示卡片
+        function displayCards(containerId, cards, cardClass) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            cards.forEach(card => {
+                if (card) {
+                    const cardElement = document.createElement('div');
+                    cardElement.className = `card ${cardClass}`;
+                    cardElement.textContent = card;
+                    container.appendChild(cardElement);
+                }
+            });
+        }
+        
+        // 載入遊戲歷史
+        async function loadGameHistory() {
+            try {
+                const response = await fetch('/api/history', {
+                    headers: { 'Player-ID': playerId }
+                });
+                const data = await response.json();
+                
+                const historyContainer = document.getElementById('game-history');
+                if (data.history && data.history.length > 0) {
+                    let html = '<ul style="list-style: none;">';
+                    data.history.slice(0, 5).forEach(record => {
+                        const details = JSON.parse(record.details || '{}');
+                        const result = record.win_amount > 0 ? 
+                            `✅ +${record.win_amount}` : 
+                            `❌ -${record.bet_amount}`;
+                        html += `
+                            <li style="margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;">
+                                ${new Date(record.created_at).toLocaleString()} | 
+                                ${record.game_type} | 
+                                ${details.bet_on || ''} | 
+                                ${result}
+                            </li>
+                        `;
+                    });
+                    html += '</ul>';
+                    historyContainer.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('載入歷史失敗:', error);
+            }
+        }
+        
+        // 初始化頁面
+        window.onload = init;
+        
+        // 快捷鍵
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '1') selectBet('player');
+            if (e.key === '2') selectBet('banker');
+            if (e.key === '3') selectBet('tie');
+            if (e.key === 'Enter') placeBet();
+        });
+    </script>
+</body>
+</html>
