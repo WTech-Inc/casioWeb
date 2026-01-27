@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 登入 - 快活娛樂城</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            color: #ffd700;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .logo p {
+            color: #aaa;
+        }
+        
+        .auth-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .tab.active {
+            color: #ffd700;
+            border-bottom: 3px solid #ffd700;
+        }
+        
+        .form {
+            display: none;
+        }
+        
+        .form.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(45deg, #ffd700, #ff9900);
+            color: #1a1a2e;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .guest-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            margin-top: 20px;
+        }
+        
+        .guest-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+        }
+        
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        
+        .message.success {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00cc66;
+            color: #00cc66;
+            display: block;
+        }
+        
+        .message.error {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff3333;
+            color: #ff3333;
+            display: block;
+        }
+        
+        .test-accounts {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .test-accounts h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        .test-accounts ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        
+        .test-accounts li {
+            margin: 5px 0;
+            color: #ccc;
+        }
+        
+        .warning {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 100, 100, 0.1);
+            border: 1px solid #ff6b6b;
+            border-radius: 10px;
+            text-align: center;
+            color: #ff6b6b;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🎰 快活娛樂城</h1>
+            <p>純屬娛樂 · 虛擬 USDT</p>
+        </div>
+        
+        <div class="auth-box">
+            <div class="tabs">
+                <div class="tab active" onclick="showForm('login')">🔓 登入</div>
+                <div class="tab" onclick="showForm('register')">📝 註冊</div>
+            </div>
+            
+            <!-- 登入表單 -->
+            <div id="login-form" class="form active">
+                <div class="input-group">
+                    <label for="login-username">使用者名稱</label>
+                    <input type="text" id="login-username" placeholder="輸入使用者名稱" value="玩家一">
+                </div>
+                
+                <div class="input-group">
+                    <label for="login-password">密碼</label>
+                    <input type="password" id="login-password" placeholder="輸入密碼" value="123456">
+                </div>
+                
+                <button class="btn" onclick="login()">進入娛樂城</button>
+                <button class="btn guest-btn" onclick="loginAsGuest()">🎭 遊客試玩</button>
+            </div>
+            
+            <!-- 註冊表單 -->
+            <div id="register-form" class="form">
+                <div class="input-group">
+                    <label for="register-username">使用者名稱</label>
+                    <input type="text" id="register-username" placeholder="創建使用者名稱">
+                </div>
+                
+                <div class="input-group">
+                    <label for="register-password">密碼</label>
+                    <input type="password" id="register-password" placeholder="至少6個字元">
+                </div>
+                
+                <div class="input-group">
+                    <label for="register-confirm">確認密碼</label>
+                    <input type="password" id="register-confirm" placeholder="再次輸入密碼">
+                </div>
+                
+                <button class="btn" onclick="register()">註冊新帳號</button>
+            </div>
+            
+            <div id="message" class="message"></div>
+            
+            <div class="test-accounts">
+                <h3>測試帳號（可直接使用）</h3>
+                <ul>
+                    <li>👤 玩家一 | 密碼: 123456 | 籌碼: 5,000 USDT</li>
+                    <li>👤 玩家二 | 密碼: 654321 | 籌碼: 3,000 USDT</li>
+                    <li>👤 測試員 | 密碼: test123 | 籌碼: 10,000 USDT</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="warning">
+            ⚠️ 重要提醒：本遊戲使用虛擬 USDT，僅供娛樂學習用途。<br>
+            嚴禁未成年人參與，請勿沉迷遊戲。
+        </div>
+    </div>
+    
+    <script>
+        let currentForm = 'login';
+        
+        // 切換表單
+        function showForm(formType) {
+            currentForm = formType;
+            
+            // 更新 tab
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab')[formType === 'login' ? 0 : 1].classList.add('active');
+            
+            // 更新表單顯示
+            document.getElementById('login-form').classList.remove('active');
+            document.getElementById('register-form').classList.remove('active');
+            document.getElementById(`${formType}-form`).classList.add('active');
+            
+            // 清除訊息
+            hideMessage();
+        }
+        
+        // 顯示訊息
+        function showMessage(text, type = 'error') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+        
+        // 隱藏訊息
+        function hideMessage() {
+            const messageDiv = document.getElementById('message');
+            messageDiv.style.display = 'none';
+        }
+        
+        // 登入
+        async function login() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            if (!username || !password) {
+                showMessage('請填寫使用者名稱和密碼');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // 儲存 session ID
+                    localStorage.setItem('sessionId', data.sessionId);
+                    
+                    showMessage('🎉 登入成功！正在進入遊戲大廳...', 'success');
+                    
+                    // 3秒後跳轉
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    showMessage(data.error || '登入失敗');
+                }
+            } catch (error) {
+                showMessage('網路錯誤，請稍後再試');
+                console.error('登入錯誤:', error);
+            }
+        }
+        
+        // 註冊
+        async function register() {
+            const username = document.getElementById('register-username').value.trim();
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm').value;
+            
+            if (!username || !password) {
+                showMessage('請填寫所有欄位');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showMessage('密碼至少需要6個字元');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showMessage('兩次輸入的密碼不一致');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // 儲存 session ID
+                    localStorage.setItem('sessionId', data.sessionId);
+                    
+                    showMessage('🎊 註冊成功！獲得 1,000 USDT 起始籌碼', 'success');
+                    
+                    // 3秒後跳轉
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 3000);
+                } else {
+                    showMessage(data.error || '註冊失敗');
+                }
+            } catch (error) {
+                showMessage('網路錯誤，請稍後再試');
+                console.error('註冊錯誤:', error);
+            }
+        }
+        
+        // 遊客試玩（自動註冊一個隨機帳號）
+        async function loginAsGuest() {
+            const randomNum = Math.floor(Math.random() * 10000);
+            const username = `遊客_${randomNum}`;
+            const password = 'guest123';
+            
+            try {
+                // 嘗試註冊遊客帳號
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        username, 
+                        password 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('sessionId', data.sessionId);
+                    
+                    showMessage(`🎭 歡迎 ${username}！獲得 1,000 USDT 試玩籌碼`, 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    // 如果重複，嘗試登入
+                    const loginResponse = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+                    
+                    const loginData = await loginResponse.json();
+                    
+                    if (loginResponse.ok) {
+                        localStorage.setItem('sessionId', loginData.sessionId);
+                        
+                        showMessage(`歡迎回來 ${username}！`, 'success');
+                        
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
+                    } else {
+                        showMessage('遊客登入失敗，請手動註冊');
+                    }
+                }
+            } catch (error) {
+                showMessage('網路錯誤，請稍後再試');
+                console.error('遊客登入錯誤:', error);
+            }
+        }
+        
+        // 檢查是否有已儲存的 session
+        window.onload = () => {
+            const savedSession = localStorage.getItem('sessionId');
+            if (savedSession) {
+                // 可以嘗試自動登入
+                console.log('發現已儲存的 session:', savedSession.substring(0, 20) + '...');
+            }
+        };
+    </script>
+</body>
+</html>

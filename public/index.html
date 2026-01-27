@@ -171,7 +171,75 @@
                 document.getElementById('api-status').style.color = '#ff6b6b';
             }
         }
+        // 檢查登入狀態
+async function checkLogin() {
+    try {
+        const sessionId = localStorage.getItem('sessionId');
         
+        if (!sessionId) {
+            // 未登入，跳轉到登入頁
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        // 驗證 session
+        const response = await fetch('/api/auth/profile', {
+            headers: { 'Session-ID': sessionId }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            // 登入成功，顯示玩家資訊
+            document.getElementById('player-id').textContent = data.user.username;
+            document.getElementById('player-chips').textContent = data.user.chips;
+            document.getElementById('player-stats').textContent = 
+                `${data.user.wins}/${data.user.losses}`;
+        } else {
+            // 登入失效，清除並跳轉
+            localStorage.removeItem('sessionId');
+            window.location.href = '/login.html';
+        }
+    } catch (error) {
+        console.error('登入檢查失敗:', error);
+        window.location.href = '/login.html';
+    }
+}
+
+// 登出功能
+function logout() {
+    const sessionId = localStorage.getItem('sessionId');
+    
+    if (sessionId) {
+        fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Session-ID': sessionId }
+        });
+    }
+    
+    localStorage.removeItem('sessionId');
+    window.location.href = '/login.html';
+}
+
+// 在原有 loadPlayerInfo 中替換
+window.onload = async () => {
+    await checkLogin();  // 先檢查登入
+    await checkAPI();    // 再檢查 API
+    
+    // 添加登出按鈕
+    const playerInfoDiv = document.querySelector('.player-info');
+    const logoutBtn = document.createElement('button');
+    logoutBtn.textContent = '🚪 登出';
+    logoutBtn.style.marginLeft = '20px';
+    logoutBtn.style.padding = '5px 15px';
+    logoutBtn.style.background = '#ff6b6b';
+    logoutBtn.style.border = 'none';
+    logoutBtn.style.borderRadius = '5px';
+    logoutBtn.style.color = 'white';
+    logoutBtn.style.cursor = 'pointer';
+    logoutBtn.onclick = logout;
+    
+    playerInfoDiv.appendChild(logoutBtn);
+};
         // 初始化
         window.onload = async () => {
             await loadPlayerInfo();

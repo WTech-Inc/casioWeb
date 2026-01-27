@@ -1,191 +1,226 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const crypto = require('crypto');
-
-class Database {
+// api/database.js - 記憶體版本
+class MemoryAuthDatabase {
     constructor() {
-        this.db = new sqlite3.Database(path.join(__dirname, 'casino.db'));
-        this.initDatabase();
+        // 記憶體儲存
+        this.users = new Map();      // player_id -> 使用者資料
+        this.sessions = new Map();   // session_id -> player_id
+        this.gameHistory = [];       // 遊戲紀錄
+        
+        // 預設測試帳號
+        this.createTestAccounts();
+        
+        console.log('🔐 記憶體認證系統已啟動');
     }
-
-    initDatabase() {
-        // 玩家資料表
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS players (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                player_id TEXT UNIQUE,
-                username TEXT UNIQUE,
-                chips INTEGER DEFAULT 1000,
-                wins INTEGER DEFAULT 0,
-                losses INTEGER DEFAULT 0,
-                total_bet INTEGER DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                last_login DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        // 遊戲紀錄
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS game_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                player_id TEXT,
-                game_type TEXT,
-                bet_amount INTEGER,
-                win_amount INTEGER,
-                result TEXT,
-                details TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (player_id) REFERENCES players(player_id)
-            )
-        `);
-
-        // 百家樂牌局紀錄
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS baccarat_games (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                game_id TEXT UNIQUE,
-                player_cards TEXT,
-                banker_cards TEXT,
-                player_points INTEGER,
-                banker_points INTEGER,
-                result TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-    }
-
-    // 玩家相關方法
-    async getOrCreatePlayer(playerId, username = null) {
-        return new Promise((resolve, reject) => {
-            this.db.get(
-                'SELECT * FROM players WHERE player_id = ?',
-                [playerId],
-                async (err, row) => {
-                    if (err) reject(err);
-                    
-                    if (!row) {
-                        // 創建新玩家
-                        const newPlayer = {
-                            player_id: playerId,
-                            username: username || `玩家_${Date.now()}`,
-                            chips: 1000,
-                            wins: 0,
-                            losses: 0,
-                            total_bet: 0
-                        };
-                        
-                        await this.createPlayer(newPlayer);
-                        resolve(newPlayer);
-                    } else {
-                        resolve(row);
-                    }
-                }
-            );
+    
+    createTestAccounts() {
+        // 預設測試帳號
+        const testAccounts = [
+            { username: '玩家一', password: '123456', chips: 5000 },
+            { username: '玩家二', password: '654321', chips: 3000 },
+            { username: '測試員', password: 'test123', chips: 10000 }
+        ];
+        
+        testAccounts.forEach(acc => {
+            const playerId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            this.users.set(playerId, {
+                player_id: playerId,
+                username: acc.username,
+                password: acc.password, // 實際應該要加密
+                chips: acc.chips,
+                wins: 0,
+                losses: 0,
+                total_bet: 0,
+                created_at: new Date().toISOString(),
+                last_login: new Date().toISOString()
+            });
         });
     }
-
-    async createPlayer(player) {
-        return new Promise((resolve, reject) => {
-            this.db.run(
-                `INSERT INTO players (player_id, username, chips, wins, losses, total_bet) 
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [player.player_id, player.username, player.chips, player.wins, player.losses, player.total_bet],
-                function(err) {
-                    if (err) reject(err);
-                    resolve({ id: this.lastID, ...player });
-                }
-            );
-        });
+    
+    // 🔑 註冊新使用者
+    async register(username, password) {
+        // 檢查使用者名稱是否已存在
+        const existingUser = Array.from(this.users.values())
+            .find(u => u.username === username);
+        
+        if (existingUser) {
+            throw new Error('使用者名稱已存在');
+        }
+        
+        if (password.length < 6) {
+            throw new Error('密碼至少需要6個字元');
+        }
+        
+        // 建立新使用者
+        const playerId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const newUser = {
+            player_id: playerId,
+            username: username,
+            password: password, // 注意：實際應用應該加密！
+            chips: 1000, // 初始籌碼
+            wins: 0,
+            losses: 0,
+            total_bet: 0,
+            created_at: new Date().toISOString(),
+            last_login: new Date().toISOString()
+        };
+        
+        this.users.set(playerId, newUser);
+        
+        // 建立 session
+        const sessionId = this.createSession(playerId);
+        
+        return {
+            sessionId,
+            user: { ...newUser, password: undefined } // 不返回密碼
+        };
     }
-
+    
+    // 🔓 登入
+    async login(username, password) {
+        // 尋找使用者
+        const user = Array.from(this.users.values())
+            .find(u => u.username === username && u.password === password);
+        
+        if (!user) {
+            throw new Error('使用者名稱或密碼錯誤');
+        }
+        
+        // 更新最後登入時間
+        user.last_login = new Date().toISOString();
+        this.users.set(user.player_id, user);
+        
+        // 建立 session
+        const sessionId = this.createSession(user.player_id);
+        
+        return {
+            sessionId,
+            user: { ...user, password: undefined }
+        };
+    }
+    
+    // 🆔 建立 session
+    createSession(playerId) {
+        const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
+        this.sessions.set(sessionId, {
+            player_id: playerId,
+            created_at: Date.now(),
+            expires_at: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7天過期
+        });
+        
+        // 定期清理過期 session
+        this.cleanExpiredSessions();
+        
+        return sessionId;
+    }
+    
+    // 🧹 清理過期 session
+    cleanExpiredSessions() {
+        const now = Date.now();
+        for (const [sessionId, session] of this.sessions.entries()) {
+            if (session.expires_at < now) {
+                this.sessions.delete(sessionId);
+            }
+        }
+    }
+    
+    // 👤 驗證 session
+    async validateSession(sessionId) {
+        const session = this.sessions.get(sessionId);
+        
+        if (!session) {
+            throw new Error('無效的登入狀態');
+        }
+        
+        // 檢查是否過期
+        if (session.expires_at < Date.now()) {
+            this.sessions.delete(sessionId);
+            throw new Error('登入已過期，請重新登入');
+        }
+        
+        // 取得使用者資料
+        const user = this.users.get(session.player_id);
+        if (!user) {
+            throw new Error('使用者不存在');
+        }
+        
+        // 更新 session 時間
+        session.expires_at = Date.now() + (7 * 24 * 60 * 60 * 1000);
+        
+        return {
+            ...user,
+            password: undefined // 不返回密碼
+        };
+    }
+    
+    // 🚪 登出
+    async logout(sessionId) {
+        this.sessions.delete(sessionId);
+        return true;
+    }
+    
+    // 💰 更新籌碼
     async updatePlayerChips(playerId, chipChange, isWin = false) {
-        return new Promise((resolve, reject) => {
-            // 先取得當前籌碼
-            this.db.get(
-                'SELECT chips, wins, losses FROM players WHERE player_id = ?',
-                [playerId],
-                (err, player) => {
-                    if (err) reject(err);
-                    
-                    const newChips = player.chips + chipChange;
-                    const updates = {
-                        chips: newChips,
-                        wins: isWin ? player.wins + 1 : player.wins,
-                        losses: !isWin && chipChange < 0 ? player.losses + 1 : player.losses,
-                        total_bet: player.total_bet + Math.abs(chipChange)
-                    };
-                    
-                    this.db.run(
-                        `UPDATE players SET 
-                         chips = ?, wins = ?, losses = ?, total_bet = ?,
-                         last_login = CURRENT_TIMESTAMP
-                         WHERE player_id = ?`,
-                        [updates.chips, updates.wins, updates.losses, updates.total_bet, playerId],
-                        (updateErr) => {
-                            if (updateErr) reject(updateErr);
-                            resolve({ ...player, ...updates });
-                        }
-                    );
-                }
-            );
-        });
+        const player = this.users.get(playerId);
+        if (!player) {
+            throw new Error('玩家不存在');
+        }
+        
+        player.chips += chipChange;
+        
+        if (isWin) {
+            player.wins += 1;
+        } else if (chipChange < 0) {
+            player.losses += 1;
+        }
+        
+        player.total_bet += Math.abs(chipChange);
+        player.last_login = new Date().toISOString();
+        
+        return player;
     }
-
-    // 遊戲紀錄
+    
+    // 📜 遊戲紀錄
     async saveGameHistory(record) {
-        return new Promise((resolve, reject) => {
-            this.db.run(
-                `INSERT INTO game_history 
-                 (player_id, game_type, bet_amount, win_amount, result, details) 
-                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [
-                    record.player_id,
-                    record.game_type,
-                    record.bet_amount,
-                    record.win_amount,
-                    record.result,
-                    JSON.stringify(record.details || {})
-                ],
-                function(err) {
-                    if (err) reject(err);
-                    resolve(this.lastID);
-                }
-            );
-        });
+        const historyEntry = {
+            id: this.gameHistory.length + 1,
+            ...record,
+            created_at: new Date().toISOString()
+        };
+        this.gameHistory.push(historyEntry);
+        return historyEntry.id;
     }
-
+    
     async getPlayerHistory(playerId, limit = 10) {
-        return new Promise((resolve, reject) => {
-            this.db.all(
-                `SELECT * FROM game_history 
-                 WHERE player_id = ? 
-                 ORDER BY created_at DESC 
-                 LIMIT ?`,
-                [playerId, limit],
-                (err, rows) => {
-                    if (err) reject(err);
-                    resolve(rows);
-                }
-            );
-        });
+        return this.gameHistory
+            .filter(h => h.player_id === playerId)
+            .slice(0, limit)
+            .map(h => ({
+                ...h,
+                details: typeof h.details === 'string' ? JSON.parse(h.details) : h.details
+            }));
     }
-
+    
+    // 🏆 排行榜
     async getLeaderboard(limit = 10) {
-        return new Promise((resolve, reject) => {
-            this.db.all(
-                `SELECT username, chips, wins, losses, total_bet,
-                 RANK() OVER (ORDER BY chips DESC) as rank
-                 FROM players 
-                 ORDER BY chips DESC 
-                 LIMIT ?`,
-                [limit],
-                (err, rows) => {
-                    if (err) reject(err);
-                    resolve(rows);
-                }
-            );
-        });
+        return Array.from(this.users.values())
+            .filter(u => u.chips > 0)
+            .sort((a, b) => b.chips - a.chips)
+            .slice(0, limit)
+            .map((player, index) => ({
+                ...player,
+                password: undefined,
+                rank: index + 1
+            }));
+    }
+    
+    // 👥 取得所有使用者（除錯用）
+    getAllUsers() {
+        return Array.from(this.users.values()).map(u => ({
+            ...u,
+            password: undefined
+        }));
     }
 }
 
-module.exports = new Database();
+// 匯出單例
+module.exports = new MemoryAuthDatabase();
