@@ -3,12 +3,13 @@ const cors = require('cors');
 const db = require('./database');
 const baccaratAPI = require('./games/baccarat');
 const slotsAPI = require('./games/slots');
+const path = require("path");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, "..", "public")));
 
 // 產生玩家 ID（從 cookie 或 header）
 const getPlayerId = (req) => {
