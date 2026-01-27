@@ -96,6 +96,551 @@
             font-size: 0.9rem;
             color: #aaa;
         }
+        /* 充值相關樣式 */
+        .deposit-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .deposit-modal.active {
+            display: flex;
+            animation: fadeIn 0.3s;
+        }
+        
+        .deposit-content {
+            background: linear-gradient(135deg, var(--purple-dark), #0c0b1a);
+            width: 100%;
+            max-width: 900px;
+            border-radius: 25px;
+            border: 2px solid var(--gold);
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .deposit-header {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .deposit-header h3 {
+            font-size: 1.8rem;
+            color: var(--gold);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2.5rem;
+            cursor: pointer;
+            padding: 0 15px;
+            transition: all 0.3s;
+        }
+        
+        .close-btn:hover {
+            color: var(--gold);
+            transform: scale(1.2);
+        }
+        
+        .deposit-body {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .deposit-body {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .package-section, .payment-section, .order-summary {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+        }
+        
+        .package-section h4, .payment-section h4, .order-summary h4 {
+            color: var(--gold);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .package-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .package-card:hover {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: var(--gold);
+            transform: translateY(-5px);
+        }
+        
+        .package-card.active {
+            background: rgba(255, 215, 0, 0.15);
+            border-color: var(--gold);
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2);
+        }
+        
+        .package-card.popular::before {
+            content: '熱門';
+            position: absolute;
+            top: 8px;
+            right: -25px;
+            background: var(--red);
+            color: white;
+            padding: 3px 30px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transform: rotate(45deg);
+        }
+        
+        .package-amount {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--gold);
+            margin-bottom: 5px;
+        }
+        
+        .package-bonus {
+            font-size: 0.9rem;
+            color: #00cc66;
+            margin-bottom: 5px;
+        }
+        
+        .package-label {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .custom-amount {
+            margin-top: 30px;
+        }
+        
+        .amount-input {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .amount-input input {
+            flex: 1;
+            padding: 15px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            outline: none;
+        }
+        
+        .amount-input .currency {
+            padding: 0 20px;
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--gold);
+            font-weight: bold;
+        }
+        
+        .quick-amounts {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-amounts button {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .quick-amounts button:hover {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: var(--gold);
+        }
+        
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .payment-method {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .payment-method:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+        
+        .payment-method.active {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: var(--gold);
+        }
+        
+        .method-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .method-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .method-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .method-fee {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .method-details {
+            text-align: right;
+        }
+        
+        .method-min {
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        .order-summary {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .summary-details {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+        
+        .summary-row.total {
+            font-size: 1.3rem;
+            padding-top: 15px;
+            border-top: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .summary-divider {
+            height: 1px;
+            background: rgba(255, 215, 0, 0.5);
+            margin: 15px 0;
+        }
+        
+        .confirm-deposit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+            color: #1a1a2e;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            margin-top: auto;
+        }
+        
+        .confirm-deposit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);
+        }
+        
+        .test-deposit-note {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(74, 144, 226, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid var(--blue);
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        /* 付款指示彈窗 */
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .payment-modal.active {
+            display: flex;
+        }
+        
+        .payment-content {
+            background: linear-gradient(135deg, #0f0c29, #302b63);
+            width: 100%;
+            max-width: 700px;
+            border-radius: 20px;
+            border: 3px solid var(--gold);
+            overflow: hidden;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .payment-header {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        
+        .payment-body {
+            padding: 30px;
+        }
+        
+        .order-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .order-id {
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: var(--gold);
+        }
+        
+        .amount, .bonus, .total {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .bonus { color: #00cc66; }
+        .total { color: var(--gold); }
+        
+        .status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .status.pending {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--gold);
+        }
+        
+        .wallet-address {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .address-box {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .address-box code {
+            flex: 1;
+            font-family: monospace;
+            font-size: 1rem;
+            word-break: break-all;
+            color: var(--gold);
+        }
+        
+        .copy-btn {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 15px;
+            transition: all 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(255, 215, 0, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .payment-instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .instructions-text {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            white-space: pre-line;
+            line-height: 1.6;
+            color: #ccc;
+        }
+        
+        .payment-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .payment-actions button {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .btn-test-complete {
+            background: linear-gradient(45deg, #00cc66, #00a854);
+            color: white;
+        }
+        
+        .btn-check-status {
+            background: linear-gradient(45deg, var(--blue), #2b6cb0);
+            color: white;
+        }
+        
+        .btn-test-complete:hover, .btn-check-status:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .important-notes {
+            background: rgba(255, 100, 100, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 4px solid var(--red);
+        }
+        
+        .important-notes h4 {
+            color: var(--red);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .important-notes ul {
+            padding-left: 20px;
+            color: #ff9999;
+        }
+        
+        .important-notes li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -134,11 +679,163 @@
         </div>
         
         <div class="warning">
-            ⚠️ 重要提醒：本遊戲使用虛擬 USDT，僅供娛樂學習用途。<br>
+            ⚠️ 重要提醒：本遊戲使用虛擬 USDT。<br>
             嚴禁未成年人參與，請勿沉迷遊戲。遊戲有風險，下注需謹慎。
         </div>
     </div>
+    <!-- 充值彈窗 -->
+    <div class="deposit-modal" id="deposit-modal">
+        <div class="deposit-content">
+            <div class="deposit-header">
+                <h3><i class="fas fa-coins"></i> USDT 充值中心</h3>
+                <button class="close-btn" onclick="closeDepositModal()">&times;</button>
+            </div>
+            
+            <div class="deposit-body">
+                <!-- 套餐選擇 -->
+                <div class="package-section">
+                    <h4><i class="fas fa-gift"></i> 選擇充值套餐</h4>
+                    <div class="packages-grid" id="packages-grid">
+                        <!-- 套餐會動態載入 -->
+                    </div>
+                    
+                    <div class="custom-amount">
+                        <h4><i class="fas fa-edit"></i> 自定義金額</h4>
+                        <div class="amount-input">
+                            <input type="number" id="custom-amount" placeholder="輸入金額" min="10" max="1000000">
+                            <span class="currency">USDT</span>
+                        </div>
+                        <div class="quick-amounts">
+                            <button onclick="setCustomAmount(100)">100</button>
+                            <button onclick="setCustomAmount(500)">500</button>
+                            <button onclick="setCustomAmount(1000)">1,000</button>
+                            <button onclick="setCustomAmount(5000)">5,000</button>
+                            <button onclick="setCustomAmount(10000)">10,000</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 支付方式 -->
+                <div class="payment-section">
+                    <h4><i class="fas fa-credit-card"></i> 選擇支付方式</h4>
+                    <div class="payment-methods" id="payment-methods">
+                        <!-- 支付方式會動態載入 -->
+                    </div>
+                </div>
+                
+                <!-- 訂單摘要 -->
+                <div class="order-summary">
+                    <h4><i class="fas fa-receipt"></i> 訂單摘要</h4>
+                    <div class="summary-details">
+                        <div class="summary-row">
+                            <span>充值金額:</span>
+                            <span id="summary-amount">0 USDT</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>獎勵金額:</span>
+                            <span id="summary-bonus" style="color: #00cc66;">+0 USDT</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>手續費:</span>
+                            <span id="summary-fee">0 USDT</span>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-row total">
+                            <span>實際到帳:</span>
+                            <span id="summary-total" style="color: #ffd700; font-weight: bold;">0 USDT</span>
+                        </div>
+                    </div>
+                    
+                    <button class="confirm-deposit-btn" onclick="createDepositOrder()">
+                        <i class="fas fa-check-circle"></i> 確認充值
+                    </button>
+                    
+                    <div class="test-deposit-note">
+                        <p><i class="fas fa-info-circle"></i> 測試功能：可使用「測試充值」快速體驗</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
+    <!-- 付款指示彈窗 -->
+    <div class="payment-modal" id="payment-modal">
+        <div class="payment-content">
+            <div class="payment-header">
+                <h3><i class="fas fa-qrcode"></i> 付款指示</h3>
+                <button class="close-btn" onclick="closePaymentModal()">&times;</button>
+            </div>
+            
+            <div class="payment-body">
+                <div class="order-info">
+                    <div class="info-row">
+                        <span>訂單編號:</span>
+                        <span id="payment-order-id" class="order-id"></span>
+                    </div>
+                    <div class="info-row">
+                        <span>充值金額:</span>
+                        <span id="payment-amount" class="amount"></span>
+                    </div>
+                    <div class="info-row">
+                        <span>獎勵金額:</span>
+                        <span id="payment-bonus" class="bonus"></span>
+                    </div>
+                    <div class="info-row">
+                        <span>總到帳:</span>
+                        <span id="payment-total" class="total"></span>
+                    </div>
+                    <div class="info-row">
+                        <span>支付方式:</span>
+                        <span id="payment-method"></span>
+                    </div>
+                    <div class="info-row">
+                        <span>訂單狀態:</span>
+                        <span class="status pending">待付款</span>
+                    </div>
+                    <div class="info-row">
+                        <span>過期時間:</span>
+                        <span id="payment-expiry"></span>
+                    </div>
+                </div>
+                
+                <div class="wallet-address">
+                    <h4><i class="fas fa-wallet"></i> 收款地址</h4>
+                    <div class="address-box">
+                        <code id="wallet-address"></code>
+                        <button class="copy-btn" onclick="copyWalletAddress()">
+                            <i class="fas fa-copy"></i> 複製
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="payment-instructions">
+                    <h4><i class="fas fa-list-ol"></i> 付款指示</h4>
+                    <div class="instructions-text" id="instructions-text">
+                        <!-- 指示內容會動態載入 -->
+                    </div>
+                </div>
+                
+                <div class="payment-actions">
+                    <button class="btn-test-complete" onclick="completeTestDeposit()">
+                        <i class="fas fa-bolt"></i> 測試充值完成
+                    </button>
+                    <button class="btn-check-status" onclick="checkPaymentStatus()">
+                        <i class="fas fa-sync-alt"></i> 檢查到帳狀態
+                    </button>
+                </div>
+                
+                <div class="important-notes">
+                    <h4><i class="fas fa-exclamation-triangle"></i> 重要提醒</h4>
+                    <ul>
+                        <li>請務必在30分鐘內完成轉帳，否則訂單將自動取消</li>
+                        <li>請確認收款地址和網路完全正確</li>
+                        <li>轉帳完成後，系統會在1-10分鐘內自動入帳</li>
+                        <li>如有問題，請聯繫客服並提供訂單編號</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         // 載入玩家資訊
         async function loadPlayerInfo() {
@@ -220,26 +917,445 @@ function logout() {
     window.location.href = '/login.html';
 }
 
-// 在原有 loadPlayerInfo 中替換
-window.onload = async () => {
-    await checkLogin();  // 先檢查登入
-    await checkAPI();    // 再檢查 API
+async function loadPlayerInfo() {
+    try {
+        const sessionId = localStorage.getItem('sessionId');
+        
+        const response = await fetch('/api/auth/profile', {
+            headers: sessionId ? { 'Session-ID': sessionId } : {}
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const user = data.user;
+            const playerCard = document.getElementById('player-card');
+            
+            playerCard.innerHTML = `
+                <div class="player-avatar">
+                    ${user.username ? user.username.charAt(0).toUpperCase() : 'G'}
+                </div>
+                <div class="player-info">
+                    <div class="player-name">
+                        ${user.username || '訪客玩家'}
+                        ${user.isGuest ? '<span style="font-size:0.8rem; background:#666; padding:2px 8px; border-radius:10px;">訪客</span>' : ''}
+                    </div>
+                    <div class="player-chips">
+                        <span class="chip-icon">💰</span>
+                        <span id="player-chips-value">${formatNumber(user.chips || 1000)} USDT</span>
+                    </div>
+                    <div style="font-size:0.9rem; color:#aaa; margin-top:5px;">
+                        勝/負: ${user.wins || 0}/${user.losses || 0} | 總下注: ${formatNumber(user.total_bet || 0)} USDT
+                    </div>
+                </div>
+            `;
+            
+            // 更新控制按鈕
+            const controlButtons = document.getElementById('control-buttons');
+            controlButtons.innerHTML = '';
+            
+            if (data.authenticated) {
+                // 已登入
+                const logoutBtn = document.createElement('button');
+                logoutBtn.className = 'btn btn-logout';
+                logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> 登出';
+                logoutBtn.onclick = logout;
+                controlButtons.appendChild(logoutBtn);
+            } else {
+                // 未登入
+                const loginBtn = document.createElement('button');
+                loginBtn.className = 'btn btn-login';
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> 登入';
+                loginBtn.onclick = () => window.location.href = '/login.html';
+                controlButtons.appendChild(loginBtn);
+                
+                const registerBtn = document.createElement('button');
+                registerBtn.className = 'btn btn-register';
+                registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> 註冊';
+                registerBtn.onclick = () => window.location.href = '/login.html?tab=register';
+                controlButtons.appendChild(registerBtn);
+            }
+            
+            // 添加充值按鈕（無論是否登入）
+            const depositBtn = document.createElement('button');
+            depositBtn.className = 'btn btn-deposit';
+            depositBtn.innerHTML = '<i class="fas fa-coins"></i> 充值';
+            depositBtn.onclick = showDepositModal;
+            controlButtons.appendChild(depositBtn);
+            
+        } else {
+            showStatusMessage('載入玩家資訊失敗', 'error');
+        }
+    } catch (error) {
+        console.error('載入玩家資訊失敗:', error);
+        // 顯示訪客模式
+        document.getElementById('player-card').innerHTML = `
+            <div class="player-avatar">G</div>
+            <div class="player-info">
+                <div class="player-name">訪客玩家</div>
+                <div class="player-chips">
+                    <span class="chip-icon">💰</span>
+                    <span>1,000 USDT</span>
+                </div>
+                <div style="font-size:0.9rem; color:#aaa; margin-top:5px;">
+                    請登入以保存進度
+                </div>
+            </div>
+        `;
+    }
+}
+        // 💰 充值相關變數
+    let selectedPackage = 'basic';
+    let selectedAmount = 100;
+    let selectedPaymentMethod = 'trc20';
+    let currentOrder = null;
     
-    // 添加登出按鈕
-    const playerInfoDiv = document.querySelector('.player-info');
-    const logoutBtn = document.createElement('button');
-    logoutBtn.textContent = '🚪 登出';
-    logoutBtn.style.marginLeft = '20px';
-    logoutBtn.style.padding = '5px 15px';
-    logoutBtn.style.background = '#ff6b6b';
-    logoutBtn.style.border = 'none';
-    logoutBtn.style.borderRadius = '5px';
-    logoutBtn.style.color = 'white';
-    logoutBtn.style.cursor = 'pointer';
-    logoutBtn.onclick = logout;
+    // 顯示充值彈窗
+    function showDepositModal() {
+        document.getElementById('deposit-modal').classList.add('active');
+        loadDepositOptions();
+    }
     
-    playerInfoDiv.appendChild(logoutBtn);
-};
+    // 關閉充值彈窗
+    function closeDepositModal() {
+        document.getElementById('deposit-modal').classList.remove('active');
+    }
+    
+    // 載入充值選項
+    async function loadDepositOptions() {
+        try {
+            const response = await fetch('/api/topup/options');
+            const data = await response.json();
+            
+            if (data.success) {
+                renderPackages(data.options);
+                renderPaymentMethods(data.paymentMethods);
+                updateOrderSummary();
+            }
+        } catch (error) {
+            showStatusMessage('載入充值選項失敗: ' + error.message, 'error');
+        }
+    }
+    
+    // 渲染套餐
+    function renderPackages(packages) {
+        const container = document.getElementById('packages-grid');
+        container.innerHTML = '';
+        
+        packages.forEach(pkg => {
+            const packageCard = document.createElement('div');
+            packageCard.className = `package-card ${pkg.popular ? 'popular' : ''} ${pkg.id === selectedPackage ? 'active' : ''}`;
+            packageCard.onclick = () => selectPackage(pkg.id, pkg.amount);
+            
+            packageCard.innerHTML = `
+                <div class="package-amount">${formatNumber(pkg.amount)} USDT</div>
+                ${pkg.bonus > 0 ? `<div class="package-bonus">+${formatNumber(pkg.bonus)} 獎勵</div>` : ''}
+                <div class="package-label">${pkg.label}</div>
+            `;
+            
+            container.appendChild(packageCard);
+        });
+    }
+    
+    // 渲染支付方式
+    function renderPaymentMethods(methods) {
+        const container = document.getElementById('payment-methods');
+        container.innerHTML = '';
+        
+        methods.forEach(method => {
+            const methodElement = document.createElement('div');
+            methodElement.className = `payment-method ${method.id === selectedPaymentMethod ? 'active' : ''}`;
+            methodElement.onclick = () => selectPaymentMethod(method.id);
+            
+            const methodIcon = method.id === 'trc20' ? 'fab fa-bitcoin' :
+                             method.id === 'erc20' ? 'fab fa-ethereum' :
+                             method.id === 'binance' ? 'fas fa-exchange-alt' : 'fas fa-vial';
+            
+            methodElement.innerHTML = `
+                <div class="method-info">
+                    <div class="method-icon">
+                        <i class="${methodIcon}"></i>
+                    </div>
+                    <div>
+                        <div class="method-name">${method.name}</div>
+                        <div class="method-fee">手續費: ${method.fee} USDT</div>
+                    </div>
+                </div>
+                <div class="method-details">
+                    <div class="method-min">最低: ${method.min} USDT</div>
+                </div>
+            `;
+            
+            container.appendChild(methodElement);
+        });
+    }
+    
+    // 選擇套餐
+    function selectPackage(packageId, amount) {
+        selectedPackage = packageId;
+        if (packageId !== 'custom') {
+            selectedAmount = amount;
+            document.getElementById('custom-amount').value = amount;
+        }
+        
+        // 更新選中狀態
+        document.querySelectorAll('.package-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        event.target.closest('.package-card').classList.add('active');
+        
+        updateOrderSummary();
+    }
+    
+    // 選擇支付方式
+    function selectPaymentMethod(methodId) {
+        selectedPaymentMethod = methodId;
+        
+        // 更新選中狀態
+        document.querySelectorAll('.payment-method').forEach(method => {
+            method.classList.remove('active');
+        });
+        event.target.closest('.payment-method').classList.add('active');
+        
+        updateOrderSummary();
+    }
+    
+    // 設定自定義金額
+    function setCustomAmount(amount) {
+        selectedPackage = 'custom';
+        selectedAmount = amount;
+        document.getElementById('custom-amount').value = amount;
+        
+        // 取消套餐選中
+        document.querySelectorAll('.package-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        
+        updateOrderSummary();
+    }
+    
+    // 監聽自定義金額輸入
+    document.getElementById('custom-amount').addEventListener('input', (e) => {
+        selectedPackage = 'custom';
+        selectedAmount = parseInt(e.target.value) || 0;
+        updateOrderSummary();
+    });
+    
+    // 更新訂單摘要
+    function updateOrderSummary() {
+        let amount = selectedAmount;
+        let bonus = 0;
+        
+        // 計算獎勵
+        const packages = {
+            'bronze': { bonus: 500 },
+            'silver': { bonus: 1500 },
+            'gold': { bonus: 10000 },
+            'platinum': { bonus: 25000 }
+        };
+        
+        if (packages[selectedPackage]) {
+            bonus = packages[selectedPackage].bonus;
+        }
+        
+        // 計算手續費
+        const fees = {
+            'trc20': 0,
+            'erc20': 10,
+            'binance': 1,
+            'test': 0
+        };
+        
+        const fee = fees[selectedPaymentMethod] || 0;
+        const total = amount + bonus;
+        
+        // 更新顯示
+        document.getElementById('summary-amount').textContent = formatNumber(amount) + ' USDT';
+        document.getElementById('summary-bonus').textContent = '+ ' + formatNumber(bonus) + ' USDT';
+        document.getElementById('summary-fee').textContent = formatNumber(fee) + ' USDT';
+        document.getElementById('summary-total').textContent = formatNumber(total) + ' USDT';
+    }
+    
+    // 創建充值訂單
+    async function createDepositOrder() {
+        if (selectedAmount < 10) {
+            showStatusMessage('充值金額至少 10 USDT', 'error');
+            return;
+        }
+        
+        try {
+            const sessionId = localStorage.getItem('sessionId');
+            if (!sessionId) {
+                showStatusMessage('請先登入', 'error');
+                return;
+            }
+            
+            const response = await fetch('/api/topup/create-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Session-ID': sessionId
+                },
+                body: JSON.stringify({
+                    amount: selectedAmount,
+                    paymentMethod: selectedPaymentMethod,
+                    packageId: selectedPackage
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                currentOrder = data.order;
+                showPaymentModal(data);
+            } else {
+                showStatusMessage(data.error || '創建訂單失敗', 'error');
+            }
+        } catch (error) {
+            showStatusMessage('網路錯誤: ' + error.message, 'error');
+        }
+    }
+    
+    // 顯示付款指示
+    function showPaymentModal(data) {
+        closeDepositModal();
+        
+        const order = data.order;
+        document.getElementById('payment-order-id').textContent = order.orderId;
+        document.getElementById('payment-amount').textContent = formatNumber(order.amount) + ' USDT';
+        document.getElementById('payment-bonus').textContent = formatNumber(order.bonus) + ' USDT';
+        document.getElementById('payment-total').textContent = formatNumber(order.totalAmount) + ' USDT';
+        document.getElementById('payment-method').textContent = getPaymentMethodName(order.paymentMethod);
+        document.getElementById('wallet-address').textContent = order.walletAddress;
+        document.getElementById('instructions-text').textContent = data.instructions;
+        
+        const expiryDate = new Date(order.expiresAt);
+        document.getElementById('payment-expiry').textContent = 
+            expiryDate.toLocaleString('zh-TW') + ` (${Math.round((expiryDate - new Date()) / 60000)}分鐘後)`;
+        
+        document.getElementById('payment-modal').classList.add('active');
+    }
+    
+    // 關閉付款指示
+    function closePaymentModal() {
+        document.getElementById('payment-modal').classList.remove('active');
+    }
+    
+    // 複製錢包地址
+    function copyWalletAddress() {
+        const address = document.getElementById('wallet-address').textContent;
+        navigator.clipboard.writeText(address).then(() => {
+            showStatusMessage('✅ 地址已複製到剪貼簿', 'success');
+        });
+    }
+    
+    // 完成測試充值
+    async function completeTestDeposit() {
+        if (!currentOrder) return;
+        
+        try {
+            const sessionId = localStorage.getItem('sessionId');
+            const response = await fetch('/api/topup/complete-test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Session-ID': sessionId
+                },
+                body: JSON.stringify({
+                    orderId: currentOrder.orderId,
+                    amount: currentOrder.totalAmount
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showStatusMessage(`✅ 成功充值 ${formatNumber(currentOrder.totalAmount)} USDT！`, 'success');
+                closePaymentModal();
+                loadPlayerInfo(); // 重新載入玩家資訊
+            }
+        } catch (error) {
+            showStatusMessage('充值失敗: ' + error.message, 'error');
+        }
+    }
+    
+    // 檢查付款狀態
+    function checkPaymentStatus() {
+        showStatusMessage('正在檢查到帳狀態...', 'info');
+        // 這裡應該調用 API 檢查真實狀態
+        setTimeout(() => {
+            showStatusMessage('❌ 尚未檢測到轉帳，請稍後再試', 'error');
+        }, 2000);
+    }
+    
+    // 輔助函數
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+    
+    function getPaymentMethodName(id) {
+        const names = {
+            'trc20': 'TRC20 (推薦)',
+            'erc20': 'ERC20',
+            'binance': '幣安鏈',
+            'test': '測試充值'
+        };
+        return names[id] || id;
+    }
+    
+    // 狀態訊息
+    function showStatusMessage(message, type = 'info') {
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'status-message';
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = type === 'success' ? 'rgba(0, 204, 102, 0.9)' :
+                                   type === 'error' ? 'rgba(255, 65, 108, 0.9)' :
+                                   type === 'info' ? 'rgba(74, 144, 226, 0.9)' :
+                                   'rgba(255, 215, 0, 0.9)';
+        statusDiv.innerHTML = `<p>${message}</p>`;
+        
+        document.body.appendChild(statusDiv);
+        
+        setTimeout(() => {
+            statusDiv.style.animation = 'slideIn 0.3s reverse';
+            setTimeout(() => {
+                document.body.removeChild(statusDiv);
+            }, 300);
+        }, 5000);
+    }
+    
+    // 籌碼飄落效果
+    function createChipsFall() {
+        const container = document.getElementById('chips-fall-container');
+        const chips = ['💰', '💎', '💵', '🪙', '💴', '💶'];
+        
+        for (let i = 0; i < 15; i++) {
+            const chip = document.createElement('div');
+            chip.className = 'chips-fall';
+            chip.textContent = chips[Math.floor(Math.random() * chips.length)];
+            chip.style.left = Math.random() * 100 + 'vw';
+            chip.style.animationDelay = Math.random() * 5 + 's';
+            chip.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            chip.style.fontSize = (Math.random() * 1 + 1.5) + 'rem';
+            container.appendChild(chip);
+        }
+    }
+    
+    // 初始化
+    window.onload = async () => {
+        await checkLogin();
+        await loadPlayerInfo();
+        await loadLeaderboard();
+        createChipsFall();
+        
+        // 添加充值按鈕到控制區域
+        const controlButtons = document.getElementById('control-buttons');
+        const depositBtn = document.createElement('button');
+        depositBtn.className = 'btn btn-deposit';
+        depositBtn.innerHTML = '<i class="fas fa-coins"></i> 充值 USDT';
+        depositBtn.onclick = showDepositModal;
+        controlButtons.appendChild(depositBtn);
+    };
         // 初始化
         window.onload = async () => {
             await loadPlayerInfo();
