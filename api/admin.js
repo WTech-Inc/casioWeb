@@ -34,7 +34,7 @@ const adminAuth = async (req, res, next) => {
 };
 
 // 📊 管理員儀表板數據
-router.get('/api/admin/dashboard', adminAuth, async (req, res) => {
+router.get('/dashboard', adminAuth, async (req, res) => {
     try {
         const stats = await db.getSystemStats();
         
