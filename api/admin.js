@@ -85,6 +85,7 @@ router.get('/api/admin/users', adminAuth, async (req, res) => {
 });
 
 // 💰 修改玩家籌碼
+// admin.js 第 75-99 行修改為：
 router.post('/api/admin/users/:playerId/chips', adminAuth, async (req, res) => {
     try {
         const { playerId } = req.params;
@@ -97,7 +98,22 @@ router.post('/api/admin/users/:playerId/chips', adminAuth, async (req, res) => {
             });
         }
         
-        const updatedUser = await db.adminUpdateChips(playerId, chips);
+        // 先獲取當前玩家籌碼
+        const currentUser = await db.getQuery(
+            'SELECT chips FROM users WHERE player_id = ?',
+            [playerId]
+        );
+        
+        if (!currentUser) {
+            return res.status(404).json({ 
+                success: false,
+                error: '玩家不存在' 
+            });
+        }
+        
+        // 使用 updatePlayerChips 方法，計算籌碼變化
+        const chipChange = chips - currentUser.chips;
+        const updatedUser = await db.updatePlayerChips(playerId, chipChange, false);
         
         res.json({
             success: true,

@@ -4,6 +4,7 @@ const db = require('./database');
 const baccaratAPI = require('./games/baccarat');
 const slotsAPI = require('./games/slots');
 const path = require("path");
+const adminAPI = require("./admin");
 
 const app = express();
 
@@ -761,6 +762,8 @@ function getPaymentInstructions(method, address, amount) {
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
+
+app.use("/api/admin", adminAPI);
 
 // 錯誤處理
 app.use((err, req, res, next) => {
