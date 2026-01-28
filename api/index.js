@@ -93,6 +93,11 @@ app.get('/api', (req, res) => {
                 history: 'GET /api/history',
                 leaderboard: 'GET /api/leaderboard',
                 stats: 'GET /api/stats'
+            },
+            admin: {
+                dashboard: 'GET /api/admin/dashboard',
+                users: 'GET /api/admin/users',
+                games: 'GET /api/admin/games/history'
             }
         }
     });
@@ -733,6 +738,9 @@ app.post('/api/topup/complete-test', optionalAuth, async (req, res) => {
     }
 });
 
+// 👑 管理員路由（重要：必須在這裡！）
+app.use("/api/admin", adminAPI);
+
 // 輔助函數
 function generateWalletAddress(method) {
     const addresses = {
@@ -763,8 +771,6 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
-app.use("/api/admin", adminAPI);
-
 // 錯誤處理
 app.use((err, req, res, next) => {
     console.error('伺服器錯誤:', err.stack);
@@ -775,32 +781,13 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.get('/api/admin/check', async (req, res) => {
-    try {
-        const sessionId = req.headers['session-id'];
-        
-        if (!sessionId) {
-            return res.json({
-                success: false,
-                isAdmin: false,
-                message: '請先登入'
-            });
-        }
-        
-        const user = await db.validateSession(sessionId);
-        
-        res.json({
-            success: true,
-            isAdmin: user.is_admin || false,
-            user: user
-        });
-    } catch (error) {
-        res.json({
-            success: false,
-            isAdmin: false,
-            error: error.message
-        });
-    }
+// 健康檢查
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
 });
 
 module.exports = app;
