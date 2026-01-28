@@ -10,15 +10,18 @@ class SQLiteAuthDatabase {
     
     async init() {
         return new Promise((resolve, reject) => {
-            const dbPath = path.join(__dirname, 'casino.db');
-            this.db = new sqlite3.Database(dbPath, (err) => {
+            // 🧠 使用記憶體資料庫
+            console.log('🧠 使用記憶體資料庫（開發模式）');
+            console.log('💡 注意：重啟伺服器後資料會消失');
+            
+            this.db = new sqlite3.Database(':memory:', (err) => {
                 if (err) {
-                    console.error('❌ 資料庫連接失敗:', err.message);
+                    console.error('❌ 記憶體資料庫連接失敗:', err.message);
                     reject(err);
                     return;
                 }
                 
-                console.log('✅ SQLite 資料庫連接成功');
+                console.log('✅ 記憶體資料庫連接成功');
                 
                 // 啟用外鍵
                 this.db.run('PRAGMA foreign_keys = ON');
@@ -26,7 +29,11 @@ class SQLiteAuthDatabase {
                 // 建立所有表格
                 this.createTables().then(() => {
                     console.log('📊 資料庫表格準備就緒');
-                    resolve();
+                    
+                    // 建立預設資料
+                    this.createDefaultAdmin().then(() => {
+                        this.createDefaultGameSettings().then(resolve).catch(reject);
+                    }).catch(reject);
                 }).catch(reject);
             });
         });
@@ -52,9 +59,11 @@ class SQLiteAuthDatabase {
                     )
                 `, (err) => {
                     if (err) {
+                        console.error('創建 users 表失敗:', err);
                         reject(err);
                         return;
                     }
+                    console.log('✅ users 表已建立');
                 });
                 
                 // 2. 登入會話表格
@@ -70,9 +79,11 @@ class SQLiteAuthDatabase {
                     )
                 `, (err) => {
                     if (err) {
+                        console.error('創建 sessions 表失敗:', err);
                         reject(err);
                         return;
                     }
+                    console.log('✅ sessions 表已建立');
                 });
                 
                 // 3. 遊戲歷史表格
@@ -90,9 +101,11 @@ class SQLiteAuthDatabase {
                     )
                 `, (err) => {
                     if (err) {
+                        console.error('創建 game_history 表失敗:', err);
                         reject(err);
                         return;
                     }
+                    console.log('✅ game_history 表已建立');
                 });
                 
                 // 4. 充值訂單表格
@@ -114,9 +127,11 @@ class SQLiteAuthDatabase {
                     )
                 `, (err) => {
                     if (err) {
+                        console.error('創建 deposit_orders 表失敗:', err);
                         reject(err);
                         return;
                     }
+                    console.log('✅ deposit_orders 表已建立');
                 });
                 
                 // 5. 系統設置表格
@@ -129,9 +144,11 @@ class SQLiteAuthDatabase {
                     )
                 `, (err) => {
                     if (err) {
+                        console.error('創建 system_settings 表失敗:', err);
                         reject(err);
                         return;
                     }
+                    console.log('✅ system_settings 表已建立');
                 });
                 
                 // 6. 遊戲設定表格
@@ -150,9 +167,11 @@ class SQLiteAuthDatabase {
                     )
                 `, (err) => {
                     if (err) {
+                        console.error('創建 game_settings 表失敗:', err);
                         reject(err);
                         return;
                     }
+                    console.log('✅ game_settings 表已建立');
                 });
                 
                 // 7. 公共圖標設定表格
@@ -168,15 +187,13 @@ class SQLiteAuthDatabase {
                     )
                 `, (err) => {
                     if (err) {
+                        console.error('創建 public_icons 表失敗:', err);
                         reject(err);
                         return;
                     }
-                    
-                    // 建立預設管理員帳號
-                    this.createDefaultAdmin().then(() => {
-                        // 建立預設遊戲設定
-                        this.createDefaultGameSettings().then(resolve).catch(reject);
-                    }).catch(reject);
+                    console.log('✅ public_icons 表已建立');
+                    console.log('🎉 所有資料庫表格建立完成！');
+                    resolve();
                 });
             });
         });
@@ -216,9 +233,13 @@ class SQLiteAuthDatabase {
                         );
                         
                         console.log('👑 預設管理員帳號已建立');
+                        console.log('   📧 帳號: admin');
+                        console.log('   🔑 密碼: admin123');
                     } catch (error) {
                         console.error('建立管理員帳號失敗:', error);
                     }
+                } else {
+                    console.log('👑 管理員帳號已存在');
                 }
                 resolve();
             });
@@ -270,6 +291,8 @@ class SQLiteAuthDatabase {
             }
         ];
         
+        console.log('🎮 建立預設遊戲設定...');
+        
         for (const game of defaultGames) {
             try {
                 await this.runQuery(
@@ -279,8 +302,9 @@ class SQLiteAuthDatabase {
                     [game.game_id, game.game_name, game.win_rate, game.volatility, 
                      game.min_bet, game.max_bet, game.jackpot_chance, game.description]
                 );
+                console.log(`   ✅ ${game.game_name}`);
             } catch (error) {
-                console.error(`建立遊戲設定失敗 ${game.game_id}:`, error);
+                console.error(`   建立遊戲設定失敗 ${game.game_id}:`, error);
             }
         }
         
@@ -303,6 +327,8 @@ class SQLiteAuthDatabase {
             { icon_id: 'fire', icon_name: '火焰', icon_code: '🔥', category: 'general' }
         ];
         
+        console.log('🎨 建立預設圖標...');
+        
         for (const [index, icon] of defaultIcons.entries()) {
             try {
                 await this.runQuery(
@@ -312,14 +338,17 @@ class SQLiteAuthDatabase {
                     [icon.icon_id, icon.icon_name, icon.icon_code, icon.category, index]
                 );
             } catch (error) {
-                console.error(`建立圖標失敗 ${icon.icon_id}:`, error);
+                console.error(`   建立圖標失敗 ${icon.icon_id}:`, error);
             }
         }
+        
+        console.log('✅ 預設資料建立完成');
     }
     
     // 🔄 重置資料庫
     async resetDatabase() {
         return new Promise((resolve, reject) => {
+            console.log('🔄 重置資料庫...');
             this.db.serialize(() => {
                 this.db.run('DROP TABLE IF EXISTS game_history');
                 this.db.run('DROP TABLE IF EXISTS deposit_orders');
@@ -330,7 +359,7 @@ class SQLiteAuthDatabase {
                 this.db.run('DROP TABLE IF EXISTS users');
                 
                 this.createTables().then(() => {
-                    console.log('🔄 資料庫已重置');
+                    console.log('✅ 資料庫已重置');
                     resolve();
                 }).catch(reject);
             });
@@ -514,6 +543,9 @@ class SQLiteAuthDatabase {
                 
                 // 更新籌碼
                 const newChips = player.chips + chipChange;
+                if (newChips < 0) {
+                    throw new Error('籌碼不足');
+                }
                 
                 // 更新勝負記錄
                 let wins = player.wins;
@@ -541,6 +573,28 @@ class SQLiteAuthDatabase {
                 resolve(this.sanitizeUser(updatedPlayer));
             } catch (error) {
                 await this.runQuery('ROLLBACK');
+                reject(error);
+            }
+        });
+    }
+    
+    // 👑 管理員功能：直接設定玩家籌碼（為了兼容 admin.js）
+    async adminUpdateChips(playerId, newChips) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // 直接設定籌碼值
+                await this.runQuery(
+                    'UPDATE users SET chips = ?, last_login = CURRENT_TIMESTAMP WHERE player_id = ?',
+                    [newChips, playerId]
+                );
+                
+                const updatedUser = await this.getQuery('SELECT * FROM users WHERE player_id = ?', [playerId]);
+                if (!updatedUser) {
+                    throw new Error('玩家不存在');
+                }
+                
+                resolve(this.sanitizeUser(updatedUser));
+            } catch (error) {
                 reject(error);
             }
         });
@@ -659,24 +713,14 @@ class SQLiteAuthDatabase {
                 );
                 stats.activePlayers = activePlayers.count;
                 
-                resolve(stats);
-            } catch (error) {
-                reject(error);
-            }
-        });
-    }
-    
-    // 👑 管理員功能：修改玩家籌碼
-    async adminUpdateChips(playerId, newChips) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.runQuery(
-                    'UPDATE users SET chips = ?, last_login = CURRENT_TIMESTAMP WHERE player_id = ?',
-                    [newChips, playerId]
+                // 遊戲次數統計
+                const gameStats = await this.getQuery(
+                    'SELECT COUNT(*) as totalGames, SUM(bet_amount) as totalBetAmount FROM game_history'
                 );
+                stats.totalGames = gameStats.totalGames || 0;
+                stats.totalBetAmount = gameStats.totalBetAmount || 0;
                 
-                const updatedUser = await this.getQuery('SELECT * FROM users WHERE player_id = ?', [playerId]);
-                resolve(this.sanitizeUser(updatedUser));
+                resolve(stats);
             } catch (error) {
                 reject(error);
             }
