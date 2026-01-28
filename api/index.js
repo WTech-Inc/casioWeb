@@ -772,4 +772,32 @@ app.use((err, req, res, next) => {
     });
 });
 
+app.get('/api/admin/check', async (req, res) => {
+    try {
+        const sessionId = req.headers['session-id'];
+        
+        if (!sessionId) {
+            return res.json({
+                success: false,
+                isAdmin: false,
+                message: '請先登入'
+            });
+        }
+        
+        const user = await db.validateSession(sessionId);
+        
+        res.json({
+            success: true,
+            isAdmin: user.is_admin || false,
+            user: user
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            isAdmin: false,
+            error: error.message
+        });
+    }
+});
+
 module.exports = app;
