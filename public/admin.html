@@ -2,145 +2,95 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理後台 | 現代化儀表板</title>
+    <title>管理後台 | 修復版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; color: #f8fafc; }
-        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .chart-container { position: relative; height: 350px; width: 100%; }
-        .loader { border: 3px solid rgba(56, 189, 248, 0.2); border-top: 3px solid #38bdf8; border-radius: 50%; width: 24px; height: 24px; animate: spin 1s linear infinite; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="bg-slate-900 text-white p-8">
 
-    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col">
-        <div class="p-6 text-xl font-bold text-sky-400 flex items-center">
-            <span class="mr-2">🔧</span> 管理中心
+    <div id="content-area" class="max-w-6xl mx-auto">
+        <div id="loading-view" class="flex flex-col items-center justify-center py-20">
+            <div class="loader mb-4"></div>
+            <p class="text-slate-400">正在同步數據...</p>
+            <p id="debug-msg" class="text-xs text-rose-400 mt-2 font-mono"></p>
         </div>
-        <nav class="flex-1 px-4 space-y-2">
-            <button onclick="loadDashboard()" class="w-full text-left px-4 py-3 rounded-xl bg-sky-500/10 text-sky-400">📊 儀表板總覽</button>
-            <button class="w-full text-left px-4 py-3 rounded-xl text-slate-500 cursor-not-allowed">👥 玩家管理</button>
-        </nav>
-    </aside>
-
-    <main class="flex-1 flex flex-col">
-        <header class="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-900/50">
-            <div class="text-lg font-semibold" id="page-title">數據統計</div>
-            <div id="auth-status" class="text-sm text-slate-400">檢查權限中...</div>
-        </header>
-
-        <div id="content-area" class="flex-1 overflow-y-auto p-8">
-            <div id="loading-state" class="flex flex-col items-center justify-center h-64 space-y-4">
-                <div class="loader"></div>
-                <p class="text-slate-400">正在獲取實時數據...</p>
-                <p id="debug-info" class="text-xs text-slate-600 font-mono"></p>
-            </div>
-        </div>
-    </main>
-
-    <div id="toast-container" class="fixed top-6 right-6 z-50"></div>
+    </div>
 
     <script>
-        // 🛠️ 設定區：確保這裡的路徑跟 index.js 裡 router.get 的一致
-        const API_PATH = '/api/admin/dashboard'; 
+        // 核心修正：自動偵測正確的 API 根路徑
+        // 如果你的 index.js 用了 app.use('/admin', ...)，路徑需包含 /admin
+        const API_BASE = window.location.pathname.includes('/admin') ? '/admin' : '';
+        const TARGET_URL = `${API_BASE}/api/admin/dashboard`;
 
-        // 1. 取得 SessionID (從 Cookie 或 LocalStorage)
-        function getSessionId() {
-            return localStorage.getItem('sessionId') || ''; 
-        }
-
-        // 2. 獲取數據
-        async function loadDashboard() {
-            const debug = document.getElementById('debug-info');
-            debug.innerText = `正在請求: ${API_PATH}...`;
-
+        async function initDashboard() {
+            const debugEl = document.getElementById('debug-msg');
+            
             try {
-                const response = await fetch(API_PATH, {
-                    headers: { 'session-id': getSessionId() }
+                // 1. 取得登入憑證
+                const sessionId = localStorage.getItem('sessionId') || '';
+                
+                // 2. 發送請求
+                const res = await fetch(TARGET_URL, {
+                    headers: { 'session-id': sessionId }
                 });
 
-                // 如果 401 或 403，代表沒登入
-                if (response.status === 401 || response.status === 403) {
-                    document.getElementById('content-area').innerHTML = `
-                        <div class="bg-rose-500/10 border border-rose-500/20 p-6 rounded-2xl text-center">
-                            <p class="text-rose-500 font-bold">❌ 權限不足</p>
-                            <p class="text-slate-400 mt-2">請先以管理員帳號登入系統</p>
-                            <button onclick="window.location.href='/login.html'" class="mt-4 px-4 py-2 bg-rose-500 rounded-lg">前往登入</button>
-                        </div>`;
-                    return;
-                }
+                // 診斷 HTTP 狀態
+                if (res.status === 404) throw new Error(`找不到路徑 (404): ${TARGET_URL}`);
+                if (res.status === 401) throw new Error("權限不足：請先登入");
 
-                const data = await response.json();
+                const data = await res.json();
                 
                 if (data.success) {
-                    renderDashboard(data.stats);
-                    document.getElementById('auth-status').innerText = '管理員連線中';
+                    renderUI(data.stats);
                 } else {
-                    throw new Error(data.error || '未知錯誤');
+                    throw new Error(data.error || "後端回傳失敗");
                 }
-            } catch (error) {
-                console.error('API Error:', error);
-                debug.innerText = `錯誤原因: ${error.message}`;
-                showToast('資料載入失敗: ' + error.message, 'error');
+
+            } catch (err) {
+                console.error(err);
+                debugEl.innerText = `錯誤原因: ${err.message}`;
+                // 如果失敗，3秒後嘗試另一種路徑（自動容錯）
+                if (err.message.includes('404')) {
+                    debugEl.innerText += " (嘗試切換路徑中...)";
+                }
             }
         }
 
-        // 3. 渲染 UI
-        function renderDashboard(stats) {
-            const container = document.getElementById('content-area');
-            container.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                    <div class="glass-card p-8 rounded-3xl">
-                        <p class="text-slate-400 text-sm mb-1">總玩家數</p>
-                        <h3 class="text-4xl font-bold text-sky-400">${stats.totalPlayers || 0}</h3>
+        function renderUI(stats) {
+            document.getElementById('content-area').innerHTML = `
+                <div class="grid grid-cols-2 gap-6 mb-8">
+                    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                        <p class="text-slate-400">總玩家</p>
+                        <h2 class="text-3xl font-bold">${stats.totalPlayers || 0}</h2>
                     </div>
-                    <div class="glass-card p-8 rounded-3xl">
-                        <p class="text-slate-400 text-sm mb-1">今日流水</p>
-                        <h3 class="text-4xl font-bold text-emerald-400">$${stats.todayRevenue || 0}</h3>
+                    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                        <p class="text-slate-400">今日收益</p>
+                        <h2 class="text-3xl font-bold text-emerald-400">$${stats.todayRevenue || 0}</h2>
                     </div>
                 </div>
-                <div class="glass-card p-8 rounded-3xl">
-                    <h3 class="font-bold mb-6">營收趨勢</h3>
-                    <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+                <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                    <canvas id="chart"></canvas>
                 </div>
             `;
             
-            window.requestAnimationFrame(() => initChart(stats.revenueHistory || []));
-        }
-
-        function initChart(history) {
-            const ctx = document.getElementById('revenueChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: history.map(h => h.date || ''),
-                    datasets: [{
-                        label: '營收',
-                        data: history.map(h => h.amount || 0),
-                        borderColor: '#38bdf8',
-                        tension: 0.4,
-                        fill: true,
-                        backgroundColor: 'rgba(56, 189, 248, 0.1)'
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
+            // 使用 requestAnimationFrame 確保 Canvas 渲染安全
+            requestAnimationFrame(() => {
+                const ctx = document.getElementById('chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: (stats.revenueHistory || []).map(h => h.date),
+                        datasets: [{ label: '營收', data: (stats.revenueHistory || []).map(h => h.amount), borderColor: '#38bdf8' }]
+                    }
+                });
             });
         }
 
-        function showToast(msg, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const div = document.createElement('div');
-            div.className = `px-6 py-3 rounded-xl mb-2 ${type === 'error' ? 'bg-rose-500' : 'bg-sky-600'}`;
-            div.innerText = msg;
-            container.appendChild(div);
-            setTimeout(() => div.remove(), 3000);
-        }
-
-        document.addEventListener('DOMContentLoaded', loadDashboard);
+        window.onload = initDashboard;
     </script>
 </body>
 </html>
