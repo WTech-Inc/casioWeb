@@ -1071,57 +1071,172 @@
         let currentUsersPage = 1;
         let currentGamesPage = 1;
         let selectedEmojis = [];
+        const API_BASE = window.location.origin;
+        const API_PREFIX = `${API_BASE}/api`;
+        
+        // 通用的 API 請求函數
+        async function apiRequest(endpoint, options = {}) {
+            try {
+                const sessionId = localStorage.getItem('sessionId');
+                const url = `${API_PREFIX}${endpoint}`;
+                
+                console.log('API 請求:', url, options);
+                
+                const defaultHeaders = {
+                    'Content-Type': 'application/json',
+                    'session-id': sessionId || ''
+                };
+                
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...defaultHeaders,
+                        ...options.headers
+                    }
+                });
+                
+                console.log('API 響應狀態:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('API 響應數據:', data);
+                
+                return data;
+            } catch (error) {
+                console.error('API 請求錯誤:', error);
+                throw error;
+            }
+        }
         
         // 檢查管理員登入狀態
-        // 替換 admin.html 中的 checkAdminAuth 函數：
-async function checkAdminAuth() {
-    try {
-        showLoading();
-        const sessionId = localStorage.getItem('sessionId');
-        
-        if (!sessionId) {
-            // 重導到首頁，讓使用者從那裡登入
-            window.location.href = '/';
-            return;
+        async function checkAdminAuth() {
+            try {
+                showLoading();
+                const sessionId = localStorage.getItem('sessionId');
+                
+                if (!sessionId) {
+                    // 顯示登入畫面
+                    showLoginScreen();
+                    hideLoading();
+                    return;
+                }
+                
+                // 使用 apiRequest 函數
+                const data = await apiRequest('/auth/profile');
+                
+                if (data.success && data.authenticated && data.user.is_admin) {
+                    currentAdmin = data.user;
+                    document.getElementById('admin-name').textContent = currentAdmin.username;
+                    
+                    // 載入預設頁面
+                    await showDashboard();
+                    hideLoading();
+                } else {
+                    localStorage.removeItem('sessionId');
+                    showLoginScreen();
+                    hideLoading();
+                }
+            } catch (error) {
+                console.error('驗證失敗:', error);
+                localStorage.removeItem('sessionId');
+                showLoginScreen();
+                hideLoading();
+            }
         }
         
-        // 直接使用 validateSession 的邏輯
-        const response = await fetch('/api/auth/profile', {
-            headers: { 'session-id': sessionId }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success && data.authenticated && data.user.is_admin) {
-            currentAdmin = data.user;
-            document.getElementById('admin-name').textContent = currentAdmin.username;
+        // 顯示登入畫面
+        function showLoginScreen() {
+            document.getElementById('top-bar').style.display = 'none';
+            document.getElementById('sidebar').style.display = 'none';
             
-            // 載入預設頁面
-            await showDashboard();
-            hideLoading();
-        } else {
-            // 不是管理員或未登入
-            window.location.href = '/';
+            const content = `
+                <div style="text-align: center; padding: 100px 20px;">
+                    <div style="max-width: 400px; margin: 0 auto;">
+                        <h1 style="font-size: 2.5rem; margin-bottom: 20px;">
+                            <i class="fas fa-lock"></i><br>
+                            管理員登入
+                        </h1>
+                        
+                        <div id="login-form" style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <input type="text" id="login-username" class="form-input" 
+                                       placeholder="使用者名稱" value="admin" style="width: 100%;">
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 25px;">
+                                <input type="password" id="login-password" class="form-input" 
+                                       placeholder="密碼" value="admin123" style="width: 100%;">
+                            </div>
+                            
+                            <button class="btn btn-primary" onclick="performLogin()" 
+                                    style="width: 100%; padding: 12px; font-size: 1.1rem;">
+                                <i class="fas fa-sign-in-alt"></i> 登入管理後台
+                            </button>
+                            
+                            <div id="login-error" style="color: #e53e3e; margin-top: 15px; min-height: 20px;"></div>
+                        </div>
+                        
+                        <div style="margin-top: 30px; color: #666; font-size: 0.9rem;">
+                            <p>👑 預設管理員帳號：admin / admin123</p>
+                            <p>⚠️ 僅限授權管理員訪問</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('content-area').innerHTML = content;
         }
-    } catch (error) {
-        console.error('驗證失敗:', error);
-        window.location.href = '/';
-    }
-}
+        
+        // 執行登入
+        async function performLogin() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const errorElement = document.getElementById('login-error');
+            
+            errorElement.textContent = '';
+            
+            if (!username || !password) {
+                errorElement.textContent = '請輸入帳號和密碼';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_PREFIX}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    localStorage.setItem('sessionId', data.sessionId);
+                    location.reload();  // 重新載入頁面觸發驗證
+                } else {
+                    errorElement.textContent = '❌ ' + data.error;
+                }
+            } catch (error) {
+                errorElement.textContent = '❌ 登入失敗，請檢查伺服器狀態';
+                console.error('登入錯誤:', error);
+            }
+        }
         
         // 登出
         function logout() {
             const sessionId = localStorage.getItem('sessionId');
             
             if (sessionId) {
-                fetch('/api/auth/logout', {
+                fetch(`${API_PREFIX}/auth/logout`, {
                     method: 'POST',
                     headers: { 'session-id': sessionId }
                 }).catch(() => {});
             }
             
             localStorage.removeItem('sessionId');
-            window.location.href = 'login.html';
+            location.reload();
         }
         
         // 更新導航激活狀態
@@ -1155,12 +1270,7 @@ async function checkAdminAuth() {
             document.getElementById('page-title').textContent = '儀表板';
             
             try {
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch('/api/admin/dashboard', {
-                    headers: { 'session-id': sessionId }
-                });
-                
-                const data = await response.json();
+                const data = await apiRequest('/admin/dashboard');
                 
                 if (data.success) {
                     renderDashboard(data);
@@ -1262,13 +1372,13 @@ async function checkAdminAuth() {
                                 </tr>
                             </thead>
                             <tbody id="recent-users-table">
-                                ${data.recentUsers.slice(0, 5).map(user => `
+                                ${data.recentUsers && data.recentUsers.slice(0, 5).map(user => `
                                     <tr>
                                         <td>${user.username}</td>
                                         <td>${formatNumber(user.chips)} USDT</td>
                                         <td>${formatDateTime(user.created_at)}</td>
                                     </tr>
-                                `).join('')}
+                                `).join('') || ''}
                             </tbody>
                         </table>
                     </div>
@@ -1291,7 +1401,7 @@ async function checkAdminAuth() {
                                 </tr>
                             </thead>
                             <tbody id="recent-games-table">
-                                ${data.recentGames.slice(0, 5).map(game => `
+                                ${data.recentGames && data.recentGames.slice(0, 5).map(game => `
                                     <tr>
                                         <td>${game.username}</td>
                                         <td>${game.game_type}</td>
@@ -1302,7 +1412,7 @@ async function checkAdminAuth() {
                                             </span>
                                         </td>
                                     </tr>
-                                `).join('')}
+                                `).join('') || ''}
                             </tbody>
                         </table>
                     </div>
@@ -1352,13 +1462,16 @@ async function checkAdminAuth() {
         
         // 渲染活躍玩家圖表
         function renderActivePlayersChart() {
-            const ctx = document.getElementById('activePlayersChart').getContext('2d');
+            const ctx = document.getElementById('activePlayersChart');
+            if (!ctx) return;
+            
+            const chartCtx = ctx.getContext('2d');
             
             // 模擬數據
             const days = ['週一', '週二', '週三', '週四', '週五', '週六', '週日'];
             const data = days.map(() => Math.floor(Math.random() * 50) + 100);
             
-            new Chart(ctx, {
+            new Chart(chartCtx, {
                 type: 'line',
                 data: {
                     labels: days,
@@ -1404,12 +1517,7 @@ async function checkAdminAuth() {
             document.getElementById('page-title').textContent = '玩家管理';
             
             try {
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch('/api/admin/users', {
-                    headers: { 'session-id': sessionId }
-                });
-                
-                const data = await response.json();
+                const data = await apiRequest('/admin/users');
                 
                 if (data.success) {
                     renderUsers(data.users);
@@ -1534,17 +1642,10 @@ async function checkAdminAuth() {
                     return;
                 }
                 
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch(`/api/admin/users/${playerId}/chips`, {
+                const data = await apiRequest(`/admin/users/${playerId}/chips`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'session-id': sessionId
-                    },
                     body: JSON.stringify({ chips: newChips })
                 });
-                
-                const data = await response.json();
                 
                 if (data.success) {
                     closeModal('edit-chips-modal');
@@ -1565,13 +1666,9 @@ async function checkAdminAuth() {
             }
             
             try {
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch(`/api/admin/users/${playerId}`, {
-                    method: 'DELETE',
-                    headers: { 'session-id': sessionId }
+                const data = await apiRequest(`/admin/users/${playerId}`, {
+                    method: 'DELETE'
                 });
-                
-                const data = await response.json();
                 
                 if (data.success) {
                     showUsers();
@@ -1604,12 +1701,7 @@ async function checkAdminAuth() {
             document.getElementById('page-title').textContent = '遊戲記錄';
             
             try {
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch(`/api/admin/games/history?page=${page}&limit=20`, {
-                    headers: { 'session-id': sessionId }
-                });
-                
-                const data = await response.json();
+                const data = await apiRequest(`/admin/games/history?page=${page}&limit=20`);
                 
                 if (data.success) {
                     renderGames(data);
@@ -1655,7 +1747,7 @@ async function checkAdminAuth() {
                             </tr>
                         </thead>
                         <tbody id="games-table">
-                            ${history.map(game => {
+                            ${history && history.map(game => {
                                 const netProfit = game.bet_amount - game.win_amount;
                                 return `
                                     <tr>
@@ -1680,17 +1772,17 @@ async function checkAdminAuth() {
                                             </span>
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-info" onclick="showGameDetails(${game.id})">
+                                            <button class="btn btn-sm btn-info" onclick="showGameDetails('${game.id}')">
                                                 <i class="fas fa-info-circle"></i>
                                             </button>
                                         </td>
                                     </tr>
                                 `;
-                            }).join('')}
+                            }).join('') || ''}
                         </tbody>
                     </table>
                     
-                    ${pagination.pages > 1 ? `
+                    ${pagination && pagination.pages > 1 ? `
                         <div class="pagination">
                             <button class="page-btn ${pagination.page === 1 ? 'disabled' : ''}" 
                                     onclick="showGames(${pagination.page - 1})" ${pagination.page === 1 ? 'disabled' : ''}>
@@ -1723,9 +1815,9 @@ async function checkAdminAuth() {
                 </div>
                 
                 <div style="text-align: center; margin-top: 20px; color: var(--admin-light);">
-                    顯示第 ${(pagination.page - 1) * pagination.limit + 1} - 
-                    ${Math.min(pagination.page * pagination.limit, pagination.total)} 筆記錄，
-                    總共 ${pagination.total} 筆
+                    顯示第 ${pagination ? (pagination.page - 1) * pagination.limit + 1 : 1} - 
+                    ${pagination ? Math.min(pagination.page * pagination.limit, pagination.total) : 0} 筆記錄，
+                    總共 ${pagination ? pagination.total : 0} 筆
                 </div>
             `;
             
@@ -1739,12 +1831,7 @@ async function checkAdminAuth() {
             document.getElementById('page-title').textContent = '財務報表';
             
             try {
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch('/api/admin/financial/report', {
-                    headers: { 'session-id': sessionId }
-                });
-                
-                const data = await response.json();
+                const data = await apiRequest('/admin/financial/report');
                 
                 if (data.success) {
                     renderFinancial(data);
@@ -1762,25 +1849,25 @@ async function checkAdminAuth() {
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-label">總遊戲次數</div>
-                        <div class="stat-value">${formatNumber(totals.total_games)}</div>
+                        <div class="stat-value">${formatNumber(totals?.total_games || 0)}</div>
                     </div>
                     
                     <div class="stat-card">
                         <div class="stat-label">總下注金額</div>
-                        <div class="stat-value">${formatNumber(totals.total_bet)}</div>
+                        <div class="stat-value">${formatNumber(totals?.total_bet || 0)}</div>
                         <div class="stat-label">USDT</div>
                     </div>
                     
                     <div class="stat-card">
                         <div class="stat-label">總支出</div>
-                        <div class="stat-value">${formatNumber(totals.total_win)}</div>
+                        <div class="stat-value">${formatNumber(totals?.total_win || 0)}</div>
                         <div class="stat-label">USDT</div>
                     </div>
                     
                     <div class="stat-card">
                         <div class="stat-label">淨收益</div>
-                        <div class="stat-value" style="color: ${totals.net_profit > 0 ? 'var(--success)' : 'var(--danger)'}">
-                            ${formatNumber(totals.net_profit)}
+                        <div class="stat-value" style="color: ${(totals?.net_profit || 0) > 0 ? 'var(--success)' : 'var(--danger)'}">
+                            ${formatNumber(totals?.net_profit || 0)}
                         </div>
                         <div class="stat-label">USDT</div>
                     </div>
@@ -1811,7 +1898,7 @@ async function checkAdminAuth() {
                             </tr>
                         </thead>
                         <tbody>
-                            ${report.map(item => {
+                            ${report && report.map(item => {
                                 const profitRate = ((item.net_profit / item.total_bet) * 100).toFixed(2);
                                 const avgBet = (item.total_bet / item.total_games).toFixed(0);
                                 
@@ -1830,7 +1917,7 @@ async function checkAdminAuth() {
                                         <td>${formatNumber(avgBet)} USDT</td>
                                     </tr>
                                 `;
-                            }).join('')}
+                            }).join('') || ''}
                         </tbody>
                     </table>
                 </div>
@@ -1844,14 +1931,19 @@ async function checkAdminAuth() {
             document.getElementById('content-area').innerHTML = content;
             
             // 初始化圖表
-            renderRevenueChart(report);
+            if (report && report.length > 0) {
+                renderRevenueChart(report);
+            }
         }
         
         // 渲染收益圖表
         function renderRevenueChart(report) {
-            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
             
-            new Chart(ctx, {
+            const chartCtx = ctx.getContext('2d');
+            
+            new Chart(chartCtx, {
                 type: 'bar',
                 data: {
                     labels: report.map(item => item.game_type),
@@ -1907,18 +1999,10 @@ async function checkAdminAuth() {
             document.getElementById('page-title').textContent = '遊戲設定';
             
             try {
-                const sessionId = localStorage.getItem('sessionId');
-                const [settingsRes, statsRes] = await Promise.all([
-                    fetch('/api/admin/game-settings', {
-                        headers: { 'session-id': sessionId }
-                    }),
-                    fetch('/api/admin/settings/stats', {
-                        headers: { 'session-id': sessionId }
-                    })
+                const [settingsData, statsData] = await Promise.all([
+                    apiRequest('/admin/game-settings'),
+                    apiRequest('/admin/settings/stats')
                 ]);
-                
-                const settingsData = await settingsRes.json();
-                const statsData = await statsRes.json();
                 
                 if (settingsData.success && statsData.success) {
                     renderGameSettings(settingsData.games, statsData.stats);
@@ -1934,28 +2018,28 @@ async function checkAdminAuth() {
                 <div class="stats-grid" style="margin-bottom: 30px;">
                     <div class="stat-card">
                         <div class="stat-label">活躍遊戲</div>
-                        <div class="stat-value">${stats.activeGames}</div>
-                        <div class="stat-label">總共 ${games.length} 個遊戲</div>
+                        <div class="stat-value">${stats?.activeGames || 0}</div>
+                        <div class="stat-label">總共 ${games?.length || 0} 個遊戲</div>
                     </div>
                     
                     <div class="stat-card">
                         <div class="stat-label">圖標總數</div>
-                        <div class="stat-value">${stats.totalIcons}</div>
+                        <div class="stat-value">${stats?.totalIcons || 0}</div>
                         <div class="stat-label">
-                            ${stats.iconsByCategory.map(cat => `${cat.category}: ${cat.count}`).join(' | ')}
+                            ${stats?.iconsByCategory ? stats.iconsByCategory.map(cat => `${cat.category}: ${cat.count}`).join(' | ') : ''}
                         </div>
                     </div>
                     
                     <div class="stat-card">
                         <div class="stat-label">最後更新</div>
                         <div class="stat-value" style="font-size: 1.5rem;">
-                            ${stats.lastUpdated ? formatDateTime(stats.lastUpdated) : '從未更新'}
+                            ${stats?.lastUpdated ? formatDateTime(stats.lastUpdated) : '從未更新'}
                         </div>
                     </div>
                 </div>
                 
                 <div class="settings-grid">
-                    ${games.map(game => `
+                    ${games && games.map(game => `
                         <div class="game-card">
                             <div class="game-header">
                                 <h3 class="game-title">${game.game_name}</h3>
@@ -1998,7 +2082,7 @@ async function checkAdminAuth() {
                                 </button>
                             </div>
                         </div>
-                    `).join('')}
+                    `).join('') || ''}
                 </div>
             `;
             
@@ -2008,12 +2092,7 @@ async function checkAdminAuth() {
         // 編輯遊戲設定
         async function editGame(gameId) {
             try {
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch(`/api/admin/game-settings/${gameId}`, {
-                    headers: { 'session-id': sessionId }
-                });
-                
-                const data = await response.json();
+                const data = await apiRequest(`/admin/game-settings/${gameId}`);
                 
                 if (data.success) {
                     const game = data.game;
@@ -2061,17 +2140,10 @@ async function checkAdminAuth() {
                     description: document.getElementById('edit-description').value
                 };
                 
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch(`/api/admin/game-settings/${gameId}`, {
+                const data = await apiRequest(`/admin/game-settings/${gameId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'session-id': sessionId
-                    },
                     body: JSON.stringify(settings)
                 });
-                
-                const data = await response.json();
                 
                 if (data.success) {
                     closeModal('edit-game-modal');
@@ -2091,19 +2163,12 @@ async function checkAdminAuth() {
                 const confirmAction = confirm(`確定要${currentStatus ? '停用' : '啟用'}這個遊戲嗎？`);
                 if (!confirmAction) return;
                 
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch(`/api/admin/game-settings/${gameId}`, {
+                const data = await apiRequest(`/admin/game-settings/${gameId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'session-id': sessionId
-                    },
                     body: JSON.stringify({
                         is_active: currentStatus ? 0 : 1
                     })
                 });
-                
-                const data = await response.json();
                 
                 if (data.success) {
                     showGameSettings();
@@ -2121,12 +2186,7 @@ async function checkAdminAuth() {
             document.getElementById('page-title').textContent = '圖標管理';
             
             try {
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch('/api/admin/icons', {
-                    headers: { 'session-id': sessionId }
-                });
-                
-                const data = await response.json();
+                const data = await apiRequest('/admin/icons');
                 
                 if (data.success) {
                     renderIconManager(data.icons);
@@ -2138,6 +2198,11 @@ async function checkAdminAuth() {
         
         // 渲染圖標管理
         function renderIconManager(icons) {
+            if (!icons || !Array.isArray(icons)) {
+                showError('圖標資料格式錯誤');
+                return;
+            }
+            
             // 按分類分組
             const iconsByCategory = {};
             const categories = new Set();
@@ -2231,12 +2296,7 @@ async function checkAdminAuth() {
         // 編輯圖標
         async function editIcon(iconId) {
             try {
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch('/api/admin/icons', {
-                    headers: { 'session-id': sessionId }
-                });
-                
-                const data = await response.json();
+                const data = await apiRequest('/admin/icons');
                 
                 if (data.success) {
                     const icon = data.icons.find(i => i.icon_id === iconId);
@@ -2289,34 +2349,23 @@ async function checkAdminAuth() {
                     return;
                 }
                 
-                const sessionId = localStorage.getItem('sessionId');
-                let response;
+                let data;
                 
                 if (iconId) {
                     // 更新現有圖標
-                    response = await fetch(`/api/admin/icons/${iconId}`, {
+                    data = await apiRequest(`/admin/icons/${iconId}`, {
                         method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'session-id': sessionId
-                        },
                         body: JSON.stringify(iconData)
                     });
                 } else {
                     // 新增圖標
                     iconData.icon_id = `icon_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
                     
-                    response = await fetch('/api/admin/icons', {
+                    data = await apiRequest('/admin/icons', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'session-id': sessionId
-                        },
                         body: JSON.stringify(iconData)
                     });
                 }
-                
-                const data = await response.json();
                 
                 if (data.success) {
                     closeModal('edit-icon-modal');
@@ -2409,17 +2458,10 @@ async function checkAdminAuth() {
                     return;
                 }
                 
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch('/api/admin/icons/batch-import', {
+                const data = await apiRequest('/admin/icons/batch-import', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'session-id': sessionId
-                    },
                     body: JSON.stringify({ icons })
                 });
-                
-                const data = await response.json();
                 
                 if (data.success) {
                     closeModal('import-icons-modal');
@@ -2591,17 +2633,10 @@ async function checkAdminAuth() {
             }
             
             try {
-                const sessionId = localStorage.getItem('sessionId');
-                const response = await fetch('/api/admin/reset-database', {
+                const data = await apiRequest('/admin/reset-database', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'session-id': sessionId
-                    },
                     body: JSON.stringify({ confirm: confirmText })
                 });
-                
-                const data = await response.json();
                 
                 if (data.success) {
                     closeModal('reset-db-modal');
