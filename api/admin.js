@@ -524,6 +524,18 @@ router.post('/api/admin/icons/batch-import', adminAuth, async (req, res) => {
     }
 });
 
+// 在 admin.js 加入這個處理函數
+router.post('/update-chips', adminAuth, async (req, res) => {
+    const { playerId, amount } = req.body;
+    try {
+        // 直接更新資料庫中的籌碼
+        await db.runQuery('UPDATE users SET chips = ? WHERE player_id = ?', [amount, playerId]);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // 📊 取得設定儀表板統計
 router.get('/api/admin/settings/stats', adminAuth, async (req, res) => {
     try {

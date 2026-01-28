@@ -107,30 +107,35 @@
         }
 
         // --- 儀表板渲染 ---
-        function renderDashboard(stats) {
-            document.getElementById('content-area').innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="glass p-6 rounded-2xl relative overflow-hidden">
-                        <div class="text-slate-500 text-[10px] font-bold uppercase mb-1">今日流動資金</div>
-                        <div class="text-3xl font-black text-emerald-400">$${stats.todayRevenue.toLocaleString()}</div>
-                        <i class="fas fa-chart-bar absolute -right-2 -bottom-2 text-6xl opacity-5"></i>
-                    </div>
-                    <div class="glass p-6 rounded-2xl">
-                        <div class="text-slate-500 text-[10px] font-bold uppercase mb-1">活躍會籍數</div>
-                        <div class="text-3xl font-black text-sky-400">${stats.totalPlayers}</div>
-                    </div>
-                    <div class="glass p-6 rounded-2xl border-amber-500/20">
-                        <div class="text-slate-500 text-[10px] font-bold uppercase mb-1">資料庫負載</div>
-                        <div class="text-3xl font-black text-amber-500 text-sm italic">NORMAL (Memory Mode)</div>
-                    </div>
-                </div>
-                <div class="glass p-8 rounded-3xl h-[400px]">
-                    <h3 class="text-sm font-bold text-slate-400 mb-4 tracking-widest"><i class="fas fa-wave-square mr-2"></i> 24H 營收波動圖譜</h3>
-                    <canvas id="mainChart"></canvas>
-                </div>
-            `;
-            initChart(stats.revenueHistory);
-        }
+        function renderDashboard(stats, users) {
+    // 🛡️ 防呆機制：如果 stats 是 undefined，就自動給它預設值
+    const safeStats = stats || {};
+    
+    // 確保每個數值都有 fallback (如果不存在就顯示 0)
+    const todayRevenue = safeStats.todayRevenue || 0;
+    const totalPlayers = safeStats.totalPlayers || 0;
+    const todayBets    = safeStats.todayBets || 0;
+    const history      = safeStats.revenueHistory || [];
+
+    const content = document.getElementById('content-area');
+    content.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            ${card("今日流水", `$${todayRevenue.toLocaleString()}`, "fa-sack-dollar", "text-emerald-400")}
+            ${card("總玩家數", totalPlayers, "fa-users", "text-sky-400")}
+            ${card("今日下注數", todayBets, "fa-dice", "text-purple-400")}
+            ${card("系統異常數", 0, "fa-circle-exclamation", "text-rose-400")}
+        </div>
+        <div class="glass p-8 rounded-3xl h-[400px]">
+            <h3 class="text-sm font-bold text-slate-400 mb-4 tracking-widest">
+                <i class="fas fa-wave-square mr-2"></i> 24H 營收波動圖譜
+            </h3>
+            <canvas id="mainChart"></canvas>
+        </div>
+    `;
+    
+    // 初始化圖表
+    initChart(history);
+}
 
         // --- 玩家管理：好玩的功能在這裡 ---
         function renderUsers(users) {
