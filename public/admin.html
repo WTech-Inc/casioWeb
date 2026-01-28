@@ -65,7 +65,7 @@
     <script>
     // 修正一：路徑必須與 admin.js 的 router.get('/api/admin/dashboard') 一致
     // 且因為 index.js 使用了 app.use("/admin", adminAPI)，所以完整路徑如下：
-    const TARGET_URL = '/admin/api/admin/dashboard'; 
+    const TARGET_URL = '/api/admin/dashboard'; 
 
     window.onload = function() {
         // 修正二：移除不存在的 checkAdminAuth() 避免報錯阻塞
