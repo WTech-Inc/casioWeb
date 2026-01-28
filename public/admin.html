@@ -9,11 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; }
-        
-        /* 側邊欄漸層 */
         .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #020617 100%); }
-        
-        /* 玻璃擬態卡片 */
         .glass-card { 
             background: rgba(30, 41, 59, 0.4); 
             backdrop-filter: blur(12px); 
@@ -21,13 +17,7 @@
             transition: transform 0.2s ease;
         }
         .glass-card:hover { transform: translateY(-4px); border-color: rgba(56, 189, 248, 0.3); }
-
-        /* 圖表容器固定高度防止 Pattern 錯誤 */
         .chart-container { position: relative; height: 350px; width: 100%; }
-        
-        /* 自定義捲軸 */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
     </style>
 </head>
 <body class="flex h-screen text-slate-200 overflow-hidden">
@@ -41,19 +31,16 @@
         </div>
         
         <nav class="flex-1 px-4 space-y-2">
-            <button onclick="fetchDashboardStats()" class="w-full flex items-center px-4 py-3 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
+            <button onclick="fetchDashboardData()" class="w-full flex items-center px-4 py-3 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
                 <span class="mr-3 text-lg">📊</span> 數據總覽
             </button>
             <button class="w-full flex items-center px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-800/50 transition cursor-not-allowed">
                 <span class="mr-3 text-lg">👥</span> 玩家管理
             </button>
-            <button class="w-full flex items-center px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-800/50 transition cursor-not-allowed">
-                <span class="mr-3 text-lg">⚙️</span> 系統設定
-            </button>
         </nav>
 
         <div class="p-6 border-t border-slate-800">
-            <button onclick="location.href='/auth/logout'" class="w-full py-3 rounded-xl bg-rose-500/10 text-rose-500 font-semibold hover:bg-rose-500 hover:text-white transition duration-300">
+            <button onclick="logout()" class="w-full py-3 rounded-xl bg-rose-500/10 text-rose-500 font-semibold hover:bg-rose-500 hover:text-white transition duration-300">
                 登出系統
             </button>
         </div>
@@ -63,10 +50,7 @@
         <header class="h-20 flex items-center justify-between px-10 border-b border-slate-800/50 bg-[#020617]/80 backdrop-blur-md z-10">
             <div>
                 <h2 class="text-2xl font-bold text-white">數據統計</h2>
-                <p class="text-slate-500 text-sm">歡迎回來，管理員</p>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="h-10 w-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">👤</div>
+                <p class="text-slate-500 text-sm">管理員系統已就緒</p>
             </div>
         </header>
 
@@ -78,83 +62,86 @@
         </div>
     </main>
 
-    <div id="toast-container" class="fixed top-6 right-6 z-50"></div>
-
     <script>
-    // 1. 定義正確的 API 路徑 (對應你 index.js 與 admin.js 的掛載邏輯)
-    const TARGET_URL = '/admin/dashboard'; 
+    // 修正一：路徑必須與 admin.js 的 router.get('/api/admin/dashboard') 一致
+    // 且因為 index.js 使用了 app.use("/admin", adminAPI)，所以完整路徑如下：
+    const TARGET_URL = '/admin/api/admin/dashboard'; 
 
-    // 2. 頁面載入後自動執行
     window.onload = function() {
-        checkAdminAuth(); // 先檢查權限
-        fetchDashboardData(); // 再抓資料
+        // 修正二：移除不存在的 checkAdminAuth() 避免報錯阻塞
+        fetchDashboardData(); 
     };
 
     async function fetchDashboardData() {
-        // 取得登入時存下來的 SessionId
         const sessionId = localStorage.getItem('sessionId');
-        
-        // 顯示載入動畫
         const contentArea = document.getElementById('content-area');
-        if (contentArea) contentArea.innerHTML = '<div class="flex justify-center p-10"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div></div>';
 
         try {
             const response = await fetch(TARGET_URL, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    'session-id': sessionId // 後端 adminAuth 需要這個
+                    'session-id': sessionId 
                 }
             });
+
+            // 檢查回應狀態
+            if (!response.ok) {
+                if (response.status === 401) throw new Error('權限不足或登入逾期');
+                if (response.status === 404) throw new Error('找不到 API 路徑 (404)');
+                throw new Error('伺服器回應錯誤');
+            }
 
             const data = await response.json();
 
             if (data.success) {
-                // 如果成功，渲染數據
                 renderDashboard(data.stats);
             } else {
-                // 如果後端報錯 (例如 Session 過期)
-                document.getElementById('content-area').innerHTML = `
-                    <div class="p-4 bg-red-100 text-red-700 rounded">
-                        載入失敗：${data.error}
-                        <button onclick="location.href='/login.html'" class="ml-4 underline">重新登入</button>
-                    </div>`;
+                throw new Error(data.error || '獲取數據失敗');
             }
         } catch (error) {
             console.error('Fetch error:', error);
-            document.getElementById('content-area').innerHTML = `
-                <div class="p-4 bg-orange-100 text-orange-700 rounded">
-                    無法連線至伺服器，請檢查網路或 API 路徑是否正確。<br>
-                    目前請求路徑: ${TARGET_URL}
+            contentArea.innerHTML = `
+                <div class="p-8 glass-card rounded-3xl text-center">
+                    <p class="text-rose-500 font-bold">❌ 載入失敗</p>
+                    <p class="text-slate-400 mt-2">${error.message}</p>
+                    <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-sky-500 rounded-xl text-white">重試</button>
+                    <button onclick="location.href='/login.html'" class="mt-4 px-6 py-2 border border-slate-700 rounded-xl text-slate-300 ml-2">重新登入</button>
                 </div>`;
         }
     }
 
-    // 渲染 UI 的函數
     function renderDashboard(stats) {
         const contentArea = document.getElementById('content-area');
         contentArea.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-6 rounded shadow">
-                    <h3 class="text-gray-500 text-sm">總玩家數</h3>
-                    <p class="text-3xl font-bold">${stats.totalPlayers || 0}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <div class="glass-card p-8 rounded-3xl">
+                    <p class="text-slate-400 text-sm mb-1">總玩家數</p>
+                    <h3 class="text-4xl font-bold text-sky-400">${stats.totalPlayers || 0}</h3>
                 </div>
-                <div class="bg-white p-6 rounded shadow">
-                    <h3 class="text-gray-500 text-sm">今日營收</h3>
-                    <p class="text-3xl font-bold text-green-600">$${stats.todayRevenue || 0}</p>
+                <div class="glass-card p-8 rounded-3xl">
+                    <p class="text-slate-400 text-sm mb-1">今日營收</p>
+                    <h3 class="text-4xl font-bold text-emerald-400">$${stats.todayRevenue || 0}</h3>
                 </div>
             </div>
-            <div class="mt-6 bg-white p-6 rounded shadow">
-                <canvas id="revenueChart" style="height:300px;"></canvas>
+            <div class="glass-card p-8 rounded-3xl">
+                <h3 class="font-bold mb-6 text-white text-xl">營收趨勢圖</h3>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
             </div>
         `;
         
-        // 初始化圖表
-        initChart(stats.revenueHistory || []);
+        // 修正三：使用 requestAnimationFrame 確保 Canvas 已經存在於 DOM
+        window.requestAnimationFrame(() => {
+            initChart(stats.revenueHistory || []);
+        });
     }
 
     function initChart(history) {
-        const ctx = document.getElementById('revenueChart').getContext('2d');
+        const canvas = document.getElementById('revenueChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
         new Chart(ctx, {
             type: 'line',
             data: {
@@ -162,11 +149,27 @@
                 datasets: [{
                     label: '每日收益',
                     data: history.map(h => h.amount),
-                    borderColor: '#3b82f6',
-                    tension: 0.1
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
                 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                    x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                }
             }
         });
+    }
+
+    function logout() {
+        localStorage.removeItem('sessionId');
+        location.href = '/login.html';
     }
     </script>
 </body>
