@@ -3,210 +3,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理後台 | 全功能管理系統</title>
+    <title>快活娛樂城 | 頂級管理系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; color: #f8fafc; }
         .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #020617 100%); }
-        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .nav-btn { transition: all 0.2s; border: 1px solid transparent; }
+        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); transition: 0.3s; }
+        .glass-card:hover { border-color: rgba(56, 189, 248, 0.4); }
+        .nav-btn { transition: all 0.2s; border: 1px solid transparent; color: #94a3b8; }
         .nav-btn.active { background: rgba(56, 189, 248, 0.1); color: #38bdf8; border-color: rgba(56, 189, 248, 0.2); }
-        tr { border-bottom: 1px solid rgba(255,255,255,0.05); }
-        tr:hover { background: rgba(255,255,255,0.02); }
+        .status-online { color: #10b981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+        input, select { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; color: white; }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <aside class="w-72 sidebar-gradient border-r border-slate-800 flex flex-col">
+    <aside class="w-72 sidebar-gradient border-r border-slate-800 flex flex-col z-20">
         <div class="p-8 flex items-center space-x-3">
-            <div class="w-8 h-8 bg-sky-500 rounded-lg shadow-lg shadow-sky-500/20 text-center font-bold text-white leading-8 text-xl">A</div>
-            <h1 class="text-xl font-bold tracking-tight text-white">後台管理</h1>
+            <div class="w-10 h-10 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl shadow-lg flex items-center justify-center">
+                <i class="fas fa-shield-halved text-white text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-white leading-tight">快活管理系統</h1>
+                <p class="text-[10px] text-slate-500 tracking-widest uppercase">Root Access</p>
+            </div>
         </div>
         
         <nav class="flex-1 px-4 space-y-2">
-            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn w-full flex items-center px-4 py-3 rounded-xl text-slate-400">
-                <span class="mr-3 text-lg">📊</span> 數據總覽
+            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active w-full flex items-center px-4 py-3 rounded-xl">
+                <i class="fas fa-chart-line mr-3"></i> 數據儀表板
             </button>
-            <button onclick="switchTab('users')" id="btn-users" class="nav-btn w-full flex items-center px-4 py-3 rounded-xl text-slate-400">
-                <span class="mr-3 text-lg">👥</span> 用戶管理
+            <button onclick="switchTab('users')" id="btn-users" class="nav-btn w-full flex items-center px-4 py-3 rounded-xl">
+                <i class="fas fa-users mr-3"></i> 玩家大廳管理
             </button>
-            <button onclick="switchTab('games')" id="btn-games" class="nav-btn w-full flex items-center px-4 py-3 rounded-xl text-slate-400">
-                <span class="mr-3 text-lg">🎮</span> 遊戲設定
+            <button onclick="switchTab('games')" id="btn-games" class="nav-btn w-full flex items-center px-4 py-3 rounded-xl">
+                <i class="fas fa-gamepad mr-3"></i> 遊戲賠率與圖標
+            </button>
+            <button onclick="switchTab('database')" id="btn-database" class="nav-btn w-full flex items-center px-4 py-3 rounded-xl text-amber-500/80">
+                <i class="fas fa-database mr-3"></i> 資料庫維護
             </button>
         </nav>
 
-        <div class="p-6 border-t border-slate-800">
-            <button onclick="logout()" class="w-full py-3 rounded-xl bg-rose-500/10 text-rose-500 font-semibold hover:bg-rose-500 hover:text-white transition duration-300">登出</button>
+        <div class="p-6 border-t border-slate-800 bg-slate-900/50">
+            <div class="flex items-center mb-4">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-2"></div>
+                <span class="text-xs text-slate-400">伺服器狀態: 正常</span>
+            </div>
+            <button onclick="logout()" class="w-full py-3 rounded-xl bg-rose-500/10 text-rose-500 font-bold hover:bg-rose-500 hover:text-white transition duration-300 shadow-lg shadow-rose-500/10">
+                <i class="fas fa-power-off mr-2"></i> 安全登出
+            </button>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col">
+    <main class="flex-1 flex flex-col overflow-hidden">
         <header class="h-20 flex items-center justify-between px-10 border-b border-slate-800/50 bg-[#020617]/80 backdrop-blur-md">
-            <div>
-                <h2 id="page-title" class="text-2xl font-bold text-white">數據總覽</h2>
+            <h2 id="page-title" class="text-2xl font-bold text-white tracking-tight">數據儀表板</h2>
+            <div class="flex items-center space-x-6">
+                <div class="text-right">
+                    <p id="admin-name" class="text-sm font-bold text-slate-200">超級管理員</p>
+                    <p class="text-[10px] text-sky-400 font-mono">ID: ADMIN_001</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shadow-inner">
+                    <i class="fas fa-user-gear"></i>
+                </div>
             </div>
-            <div id="status-tag" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20">系統在線</div>
         </header>
 
-        <div id="content-area" class="flex-1 overflow-y-auto p-10">
+        <div id="content-area" class="flex-1 overflow-y-auto p-10 space-y-8">
             </div>
     </main>
 
-    <script>
-    const API_BASE = '/api/admin'; 
+    <div id="modal-overlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="glass-card w-full max-w-md p-8 rounded-3xl" id="modal-content">
+            </div>
+    </div>
 
-    // 1. 初始化
+    <script>
+    const BASE_URL = '/api/admin'; 
+    let currentData = {};
+
+    // 啟動
     window.onload = () => switchTab('dashboard');
 
-    // 2. 切換分頁邏輯
+    // 切換分頁
     async function switchTab(tab) {
-        // 更新按鈕樣式
         document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById(`btn-${tab}`).classList.add('active');
         
         const content = document.getElementById('content-area');
-        content.innerHTML = '<div class="flex justify-center py-20"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-500"></div></div>';
+        content.innerHTML = '<div class="flex flex-col items-center justify-center py-20"><div class="w-12 h-12 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div><p class="mt-4 text-slate-500">同步數據中...</p></div>';
 
-        if (tab === 'dashboard') {
-            document.getElementById('page-title').innerText = '數據總覽';
-            loadDashboard();
-        } else if (tab === 'users') {
-            document.getElementById('page-title').innerText = '用戶管理';
-            loadUsers();
-        } else if (tab === 'games') {
-            document.getElementById('page-title').innerText = '遊戲與資料庫設定';
-            loadGames();
+        try {
+            const sessionId = localStorage.getItem('sessionId');
+            const headers = { 'session-id': sessionId };
+
+            if (tab === 'dashboard') {
+                document.getElementById('page-title').innerText = '數據儀表板';
+                const res = await fetch(`${BASE_URL}/dashboard`, { headers });
+                const data = await res.json();
+                renderDashboard(data.stats, data.recentUsers);
+            } else if (tab === 'users') {
+                document.getElementById('page-title').innerText = '玩家大廳管理';
+                const res = await fetch(`${BASE_URL}/dashboard`, { headers });
+                const data = await res.json();
+                renderUsers(data.recentUsers);
+            } else if (tab === 'games') {
+                document.getElementById('page-title').innerText = '遊戲賠率與圖標';
+                const res = await fetch(`${BASE_URL}/settings/stats`, { headers });
+                const data = await res.json();
+                renderGames(data.stats);
+            } else if (tab === 'database') {
+                document.getElementById('page-title').innerText = '資料庫維護';
+                renderDatabase();
+            }
+        } catch (err) {
+            content.innerHTML = `<div class="p-8 glass-card text-center text-rose-500">連線失敗: ${err.message}</div>`;
         }
     }
 
-    // --- 用戶管理模組 ---
-    async function loadUsers() {
-        try {
-            // 注意：後端 admin.js 的 API 路徑
-            const res = await fetch(`${API_BASE}/dashboard`, { headers: { 'session-id': localStorage.getItem('sessionId') } });
-            const data = await res.json();
-            
-            // 這裡假設後端回傳 data.recentUsers
-            const users = data.recentUsers || []; 
-            
-            document.getElementById('content-area').innerHTML = `
-                <div class="glass-card rounded-3xl overflow-hidden">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-800/50 text-slate-400 text-sm">
-                            <tr>
-                                <th class="p-5 font-semibold">玩家 ID</th>
-                                <th class="p-5 font-semibold">帳號</th>
-                                <th class="p-5 font-semibold">籌碼餘額</th>
-                                <th class="p-5 font-semibold">註冊時間</th>
-                                <th class="p-5 font-semibold">操作</th>
+    // --- 1. 儀表板 ---
+    function renderDashboard(stats, users) {
+        const content = document.getElementById('content-area');
+        content.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                ${card("今日流水", `$${stats.todayRevenue}`, "fa-sack-dollar", "text-emerald-400")}
+                ${card("總玩家數", stats.totalPlayers, "fa-users", "text-sky-400")}
+                ${card("今日下注數", stats.todayBets || 0, "fa-dice", "text-purple-400")}
+                ${card("系統異常數", 0, "fa-circle-exclamation", "text-rose-400")}
+            </div>
+            <div class="glass-card p-8 rounded-3xl">
+                <h3 class="text-lg font-bold mb-6">營收成長趨勢</h3>
+                <div class="h-80"><canvas id="mainChart"></canvas></div>
+            </div>
+        `;
+        initChart(stats.revenueHistory);
+    }
+
+    // --- 2. 玩家管理 ---
+    function renderUsers(users) {
+        const content = document.getElementById('content-area');
+        content.innerHTML = `
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex space-x-2">
+                    <input type="text" placeholder="搜尋玩家 ID 或帳號..." class="w-64">
+                    <button class="bg-sky-500 px-4 py-2 rounded-lg"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+            <div class="glass-card rounded-3xl overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-800/50 text-slate-400 text-xs uppercase tracking-wider">
+                        <tr>
+                            <th class="p-5">玩家帳號</th>
+                            <th class="p-5">當前籌碼</th>
+                            <th class="p-5">註冊時間</th>
+                            <th class="p-5">狀態</th>
+                            <th class="p-5">管理操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        ${users.map(u => `
+                            <tr class="border-b border-slate-800/50">
+                                <td class="p-5 font-bold text-white">${u.username}</td>
+                                <td class="p-5 text-emerald-400">$${u.chips.toLocaleString()}</td>
+                                <td class="p-5 text-slate-500">${new Date(u.created_at).toLocaleDateString()}</td>
+                                <td class="p-5"><span class="px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded text-[10px]">ACTIVE</span></td>
+                                <td class="p-5">
+                                    <button onclick="openChipModal('${u.player_id}', '${u.username}', ${u.chips})" class="text-sky-400 hover:text-sky-300 mr-4"><i class="fas fa-edit mr-1"></i> 修改籌碼</button>
+                                    <button class="text-rose-500 hover:text-rose-400"><i class="fas fa-ban mr-1"></i> 凍結</button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody class="text-slate-300">
-                            ${users.map(u => `
-                                <tr>
-                                    <td class="p-5 font-mono text-xs text-slate-500">${u.player_id}</td>
-                                    <td class="p-5 font-bold">${u.username}</td>
-                                    <td class="p-5 text-emerald-400">$${u.chips.toLocaleString()}</td>
-                                    <td class="p-5 text-sm">${new Date(u.created_at).toLocaleDateString()}</td>
-                                    <td class="p-5">
-                                        <button onclick="editUser('${u.player_id}')" class="text-sky-400 hover:underline mr-3 text-sm">編輯</button>
-                                        <button class="text-rose-500 hover:underline text-sm">凍結</button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        } catch (e) { console.error(e); }
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
     }
 
-    // --- 遊戲管理模組 ---
-    async function loadGames() {
-        try {
-            const res = await fetch(`${API_BASE}/settings/stats`, { headers: { 'session-id': localStorage.getItem('sessionId') } });
-            const data = await res.json();
-            const stats = data.stats;
-
-            document.getElementById('content-area').innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div class="glass-card p-6 rounded-2xl">
-                        <p class="text-slate-400 text-sm">活躍遊戲</p>
-                        <h3 class="text-2xl font-bold text-white">${stats.activeGames}</h3>
-                    </div>
-                    <div class="glass-card p-6 rounded-2xl">
-                        <p class="text-slate-400 text-sm">系統圖標數</p>
-                        <h3 class="text-2xl font-bold text-white">${stats.totalIcons}</h3>
-                    </div>
-                    <div class="glass-card p-6 rounded-2xl border-emerald-500/20 bg-emerald-500/5">
-                        <p class="text-slate-400 text-sm">資料庫狀態</p>
-                        <h3 class="text-2xl font-bold text-emerald-400">SQLite Online</h3>
-                    </div>
-                </div>
-                
+    // --- 3. 遊戲管理 ---
+    function renderGames(stats) {
+        const content = document.getElementById('content-area');
+        content.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="glass-card p-8 rounded-3xl">
-                    <h3 class="text-xl font-bold mb-6">Database 控制台</h3>
-                    <div class="flex space-x-4">
-                        <button class="bg-sky-500 px-6 py-2 rounded-xl text-white font-bold hover:bg-sky-400 transition">匯出資料庫 (SQL)</button>
-                        <button class="bg-slate-700 px-6 py-2 rounded-xl text-slate-300 font-bold hover:bg-slate-600 transition">清理系統日誌</button>
-                    </div>
-                    <p class="mt-4 text-xs text-slate-500 font-mono">最後更新時間: ${stats.lastUpdated || 'N/A'}</p>
-                </div>
-            `;
-        } catch (e) { console.error(e); }
-    }
-
-    // --- 數據總覽模組 ---
-    async function loadDashboard() {
-        try {
-            const res = await fetch(`${API_BASE}/dashboard`, { headers: { 'session-id': localStorage.getItem('sessionId') } });
-            const data = await res.json();
-            const stats = data.stats;
-
-            document.getElementById('content-area').innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                    <div class="glass-card p-8 rounded-3xl">
-                        <p class="text-slate-400 text-sm">總玩家</p>
-                        <h3 class="text-4xl font-bold text-sky-400">${stats.totalPlayers}</h3>
-                    </div>
-                    <div class="glass-card p-8 rounded-3xl">
-                        <p class="text-slate-400 text-sm">今日收益</p>
-                        <h3 class="text-4xl font-bold text-emerald-400">$${stats.todayRevenue}</h3>
+                    <h3 class="text-xl font-bold mb-6 text-sky-400">遊戲狀態</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800">
+                            <span>百家樂 (Baccarat)</span>
+                            <span class="text-emerald-500 text-xs"><i class="fas fa-circle mr-1"></i> 運行中</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 bg-slate-900/50 rounded-2xl border border-slate-800">
+                            <span>老虎機 (Slots)</span>
+                            <span class="text-emerald-500 text-xs"><i class="fas fa-circle mr-1"></i> 運行中</span>
+                        </div>
                     </div>
                 </div>
                 <div class="glass-card p-8 rounded-3xl">
-                    <canvas id="revenueChart" style="height:350px"></canvas>
+                    <h3 class="text-xl font-bold mb-6 text-purple-400">公共圖標庫 (Public Icons)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-4 bg-slate-800/40 rounded-2xl">
+                            <p class="text-2xl font-bold">${stats.totalIcons}</p>
+                            <p class="text-[10px] text-slate-500">總圖標數量</p>
+                        </div>
+                        <div class="text-center p-4 bg-slate-800/40 rounded-2xl">
+                            <p class="text-2xl font-bold text-sky-400">${stats.iconsByCategory[0]?.count || 0}</p>
+                            <p class="text-[10px] text-slate-500">動漫分類</p>
+                        </div>
+                    </div>
+                    <button class="w-full mt-6 py-3 border border-slate-700 rounded-xl hover:bg-slate-800 transition">管理圖標列表</button>
                 </div>
-            `;
-            initChart(stats.revenueHistory);
-        } catch (e) { console.error(e); }
+            </div>
+        `;
     }
 
-    function initChart(history) {
-        const ctx = document.getElementById('revenueChart').getContext('2d');
+    // --- 4. 資料庫維護 ---
+    function renderDatabase() {
+        const content = document.getElementById('content-area');
+        content.innerHTML = `
+            <div class="glass-card p-8 rounded-3xl border-rose-500/20 bg-rose-500/5">
+                <h3 class="text-xl font-bold text-rose-500 mb-4"><i class="fas fa-triangle-exclamation mr-2"></i> 危險區域</h3>
+                <p class="text-slate-400 text-sm mb-6">以下操作將直接影響 SQLite 資料庫實體，請謹慎操作。</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="dbAction('backup')" class="p-6 bg-slate-900 rounded-2xl border border-slate-800 text-left hover:border-sky-500/50 transition">
+                        <p class="font-bold text-sky-400 text-lg">匯出資料庫 SQL</p>
+                        <p class="text-xs text-slate-500 mt-1">下載完整資料庫備份檔 (.sqlite)</p>
+                    </button>
+                    <button onclick="dbAction('clear')" class="p-6 bg-slate-900 rounded-2xl border border-slate-800 text-left hover:border-rose-500/50 transition">
+                        <p class="font-bold text-rose-500 text-lg">清理過期 Session</p>
+                        <p class="text-xs text-slate-500 mt-1">刪除超過 24 小時未活動的玩家連線</p>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // --- 工具函數 ---
+    function card(title, value, icon, colorClass) {
+        return `
+            <div class="glass-card p-6 rounded-3xl relative overflow-hidden">
+                <i class="fas ${icon} absolute -right-2 -bottom-2 text-6xl opacity-5"></i>
+                <p class="text-slate-500 text-[10px] uppercase font-bold tracking-widest mb-1">${title}</p>
+                <h3 class="text-2xl font-bold ${colorClass}">${value}</h3>
+            </div>
+        `;
+    }
+
+    function openChipModal(id, name, current) {
+        const modal = document.getElementById('modal-overlay');
+        const content = document.getElementById('modal-content');
+        modal.classList.remove('hidden');
+        content.innerHTML = `
+            <h3 class="text-xl font-bold mb-4">修改玩家籌碼</h3>
+            <p class="text-sm text-slate-400 mb-6">正在編輯: <span class="text-white">${name}</span></p>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-slate-500">當前籌碼</label>
+                    <input type="text" value="${current}" disabled class="w-full opacity-50">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500">新籌碼數值</label>
+                    <input type="number" id="new-chips" placeholder="輸入數值..." class="w-full">
+                </div>
+            </div>
+            <div class="flex space-x-3 mt-8">
+                <button onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 transition">取消</button>
+                <button onclick="saveChips('${id}')" class="flex-1 py-3 rounded-xl bg-sky-500 font-bold hover:bg-sky-400 transition">確認存檔</button>
+            </div>
+        `;
+    }
+
+    function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+
+    async function saveChips(id) {
+        const amount = document.getElementById('new-chips').value;
+        // 這裡需要對接後端 API：/api/admin/update-chips (需在 admin.js 實作)
+        alert(`實施中: 玩家 ${id} 籌碼將改為 ${amount}`);
+        closeModal();
+    }
+
+    function initChart(history = []) {
+        const canvas = document.getElementById('mainChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels: history.map(h => h.date),
                 datasets: [{
-                    label: '每日營收',
+                    label: '營收 $',
                     data: history.map(h => h.amount),
                     borderColor: '#38bdf8',
+                    borderWidth: 3,
                     tension: 0.4,
                     fill: true,
                     backgroundColor: 'rgba(56, 189, 248, 0.05)'
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
     }
 
-    function logout() {
-        localStorage.removeItem('sessionId');
-        location.href = '/login.html';
-    }
+    function logout() { localStorage.removeItem('sessionId'); location.href = '/login.html'; }
     </script>
 </body>
 </html>
