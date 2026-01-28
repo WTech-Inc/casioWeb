@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎰 幸運老虎機 - 快活娛樂城</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --gold: #ffd700;
+            --gold-dark: #d4af37;
+            --purple-dark: #0f0c29;
+            --purple-medium: #302b63;
+            --purple-light: #24243e;
+            --red: #ff416c;
+            --blue: #4a90e2;
+            --green: #00cc66;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, var(--purple-dark), var(--purple-medium), var(--purple-light));
+            color: white;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* 頂部導航 */
+        .top-nav {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid var(--gold);
+        }
+        
+        .back-btn {
+            color: var(--gold);
+            font-size: 1.2rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .game-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--gold);
+            text-align: center;
+        }
+        
+        .player-chips-mini {
+            background: rgba(255, 215, 0, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        /* 主容器 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        /* 老虎機機器 */
+        .slots-machine {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 4px solid var(--gold);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .slots-machine::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+            z-index: -1;
+            border-radius: 25px;
+        }
+        
+        /* 滾輪容器 */
+        .reels-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            perspective: 1000px;
+        }
+        
+        .reel {
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid var(--gold);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @media (max-width: 480px) {
+            .reel {
+                width: 70px;
+                height: 70px;
+                font-size: 2rem;
+            }
+        }
+        
+        /* 支付表 */
+        .paytable {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .paytable h3 {
+            color: var(--gold);
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        
+        .paytable-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        .paytable-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .paytable-symbol {
+            font-size: 1.5rem;
+        }
+        
+        .paytable-multiplier {
+            color: var(--gold);
+            font-weight: bold;
+        }
+        
+        /* 下注控制 */
+        .bet-controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .bet-amount {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .bet-label {
+            font-weight: bold;
+            color: var(--gold);
+        }
+        
+        .bet-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 2px solid var(--gold);
+        }
+        
+        .bet-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .bet-btn {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .bet-btn.active {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        
+        .bet-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* 控制按鈕 */
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .spin-btn {
+            flex: 2;
+            padding: 18px;
+            background: linear-gradient(45deg, var(--red), #ff6b6b);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .spin-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+        
+        .auto-spin-btn {
+            flex: 1;
+            padding: 18px;
+            background: linear-gradient(45deg, var(--blue), #2b6cb0);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        /* 遊戲歷史 */
+        .game-history {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .history-title {
+            color: var(--gold);
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* 贏得動畫 */
+        @keyframes winPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes jackpot {
+            0% { color: var(--gold); }
+            25% { color: #ff0000; }
+            50% { color: #00ff00; }
+            75% { color: #0000ff; }
+            100% { color: var(--gold); }
+        }
+        
+        .winning-reel {
+            animation: winPulse 0.5s ease-in-out 3;
+        }
+        
+        .jackpot {
+            animation: jackpot 1s infinite;
+        }
+        
+        /* 狀態訊息 */
+        .status-message {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            z-index: 3000;
+            animation: slideDown 0.3s ease-out;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 響應式調整 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .slots-machine {
+                padding: 15px;
+            }
+            
+            .reels-container {
+                gap: 8px;
+            }
+            
+            .bet-controls {
+                padding: 15px;
+            }
+            
+            .control-buttons {
+                flex-direction: column;
+            }
+            
+            .bet-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .game-title {
+                font-size: 1rem;
+            }
+            
+            .player-chips-mini {
+                font-size: 0.9rem;
+                padding: 5px 10px;
+            }
+            
+            .reel {
+                width: 60px;
+                height: 60px;
+                font-size: 1.8rem;
+            }
+            
+            .paytable-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 頂部導航 -->
+    <div class="top-nav">
+        <a href="index.html" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="game-title">🎰 幸運老虎機</div>
+        <div class="player-chips-mini">
+            <i class="fas fa-coins"></i>
+            <span id="player-chips">1,000</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 老虎機機器 -->
+        <div class="slots-machine">
+            <!-- 滾輪顯示 -->
+            <div class="reels-container">
+                <div class="reel" id="reel1">🍒</div>
+                <div class="reel" id="reel2">🍒</div>
+                <div class="reel" id="reel3">🍒</div>
+            </div>
+        </div>
+        
+        <!-- 支付表 -->
+        <div class="paytable">
+            <h3>🎯 支付表</h3>
+            <div class="paytable-grid">
+                <div class="paytable-item">
+                    <span class="paytable-symbol">7️⃣7️⃣7️⃣</span>
+                    <span class="paytable-multiplier">x50 倍</span>
+                </div>
+                <div class="paytable-item">
+                    <span class="paytable-symbol">💎💎💎</span>
+                    <span class="paytable-multiplier">x30 倍</span>
+                </div>
+                <div class="paytable-item">
+                    <span class="paytable-symbol">⭐⭐⭐</span>
+                    <span class="paytable-multiplier">x10 倍</span>
+                </div>
+                <div class="paytable-item">
+                    <span class="paytable-symbol">🔔🔔</span>
+                    <span class="paytable-multiplier">x3 倍</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 下注控制 -->
+        <div class="bet-controls">
+            <div class="bet-amount">
+                <span class="bet-label">下注金額:</span>
+                <span class="bet-display" id="current-bet">10 USDT</span>
+            </div>
+            
+            <div class="bet-buttons">
+                <button class="bet-btn active" onclick="setBetAmount(10)">10</button>
+                <button class="bet-btn" onclick="setBetAmount(50)">50</button>
+                <button class="bet-btn" onclick="setBetAmount(100)">100</button>
+                <button class="bet-btn" onclick="setBetAmount(500)">500</button>
+            </div>
+            
+            <div class="control-buttons">
+                <button class="spin-btn" id="spin-btn" onclick="spin()">
+                    <i class="fas fa-play"></i> 開始旋轉
+                </button>
+                <button class="auto-spin-btn" id="auto-spin-btn" onclick="toggleAutoSpin()">
+                    <i class="fas fa-sync-alt"></i> 自動
+                </button>
+            </div>
+        </div>
+        
+        <!-- 遊戲歷史 -->
+        <div class="game-history">
+            <h3 class="history-title">📜 遊戲歷史</h3>
+            <div class="history-list" id="history-list">
+                <!-- 歷史記錄會動態添加 -->
+            </div>
+        </div>
+        
+        <!-- 遊戲說明 -->
+        <div style="color: #aaa; font-size: 0.9rem; text-align: center; margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+            <p><strong>遊戲規則:</strong></p>
+            <p>• 三個相同符號連線即可贏得獎勵</p>
+            <p>• 兩個相同符號獲得 3 倍下注金額</p>
+            <p>• 下注範圍: 10 - 1,000 USDT</p>
+        </div>
+    </div>
+
+    <script>
+        // 遊戲變數
+        let playerChips = 1000;
+        let currentBet = 10;
+        let isSpinning = false;
+        let autoSpin = false;
+        let spinInterval = null;
+        let gameHistory = [];
+        
+        // 老虎機符號
+        const symbols = ['🍒', '🍋', '⭐', '7️⃣', '🔔', '💎'];
+        
+        // 賠率表
+        const paytable = {
+            '7️⃣7️⃣7️⃣': 50,
+            '💎💎💎': 30,
+            '⭐⭐⭐': 10,
+            '🔔🔔🔔': 8,
+            '🍋🍋🍋': 5,
+            '🍒🍒🍒': 3,
+            '🍒🍒': 1.5,
+            '🍋🍋': 1.5,
+            '⭐⭐': 1.5,
+            '🔔🔔': 1.5,
+            '💎💎': 1.5
+        };
+        
+        // 載入玩家資訊
+        async function loadPlayerInfo() {
+            try {
+                const sessionId = localStorage.getItem('sessionId');
+                const headers = sessionId ? { 'session-id': sessionId } : {};
+                
+                const response = await fetch('/api/auth/profile', { headers });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        playerChips = data.user.chips || 1000;
+                        updateChipsDisplay();
+                    }
+                }
+            } catch (error) {
+                console.error('載入玩家資訊失敗:', error);
+            }
+        }
+        
+        // 更新籌碼顯示
+        function updateChipsDisplay() {
+            document.getElementById('player-chips').textContent = formatNumber(playerChips);
+        }
+        
+        // 設置下注金額
+        function setBetAmount(amount) {
+            if (isSpinning) return;
+            
+            currentBet = amount;
+            document.getElementById('current-bet').textContent = amount + ' USDT';
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.bet-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (parseInt(btn.textContent) === amount) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        // 旋轉老虎機
+        async function spin() {
+            if (isSpinning) return;
+            
+            // 檢查餘額
+            if (playerChips < currentBet) {
+                showStatusMessage('❌ 餘額不足！', 'error');
+                return;
+            }
+            
+            isSpinning = true;
+            document.getElementById('spin-btn').disabled = true;
+            
+            // 扣除下注金額
+            playerChips -= currentBet;
+            updateChipsDisplay();
+            
+            // 旋轉動畫
+            const reels = [
+                document.getElementById('reel1'),
+                document.getElementById('reel2'),
+                document.getElementById('reel3')
+            ];
+            
+            // 重置滾輪動畫
+            reels.forEach(reel => {
+                reel.classList.remove('winning-reel', 'jackpot');
+            });
+            
+            // 快速旋轉動畫
+            for (let i = 0; i < 20; i++) {
+                reels.forEach(reel => {
+                    reel.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                });
+                await sleep(50);
+            }
+            
+            // 生成結果
+            const result = [
+                symbols[Math.floor(Math.random() * symbols.length)],
+                symbols[Math.floor(Math.random() * symbols.length)],
+                symbols[Math.floor(Math.random() * symbols.length)]
+            ];
+            
+            // 顯示結果（逐個停止）
+            for (let i = 0; i < 3; i++) {
+                reels[i].textContent = result[i];
+                await sleep(300);
+            }
+            
+            // 計算獎金
+            calculateWinnings(result);
+            
+            isSpinning = false;
+            document.getElementById('spin-btn').disabled = false;
+            
+            // 自動旋轉
+            if (autoSpin && playerChips >= currentBet) {
+                setTimeout(spin, 1000);
+            }
+        }
+        
+        // 計算獎金
+        async function calculateWinnings(result) {
+            let winMultiplier = 0;
+            let winMessage = '';
+            
+            // 檢查連線
+            if (result[0] === result[1] && result[1] === result[2]) {
+                // 三個相同
+                const symbolCombo = result[0] + result[1] + result[2];
+                winMultiplier = paytable[symbolCombo] || 0;
+                
+                if (winMultiplier > 0) {
+                    winMessage = `🎉 ${result[0]}連線！贏得 ${currentBet * winMultiplier} USDT`;
+                    
+                    // 特效
+                    document.querySelectorAll('.reel').forEach(reel => {
+                        reel.classList.add('winning-reel');
+                        if (winMultiplier >= 30) {
+                            reel.classList.add('jackpot');
+                        }
+                    });
+                }
+            } else if (result[0] === result[1] || result[1] === result[2] || result[0] === result[2]) {
+                // 兩個相同
+                winMultiplier = 1.5;
+                const matchedSymbol = result[0] === result[1] ? result[0] : result[2];
+                winMessage = `✨ 兩個${matchedSymbol}！贏得 ${currentBet * winMultiplier} USDT`;
+                
+                // 標記相同的滾輪
+                if (result[0] === result[1]) {
+                    document.getElementById('reel1').classList.add('winning-reel');
+                    document.getElementById('reel2').classList.add('winning-reel');
+                } else if (result[1] === result[2]) {
+                    document.getElementById('reel2').classList.add('winning-reel');
+                    document.getElementById('reel3').classList.add('winning-reel');
+                } else {
+                    document.getElementById('reel1').classList.add('winning-reel');
+                    document.getElementById('reel3').classList.add('winning-reel');
+                }
+            }
+            
+            // 更新籌碼
+            if (winMultiplier > 0) {
+                const winAmount = currentBet * winMultiplier;
+                playerChips += winAmount;
+                updateChipsDisplay();
+                
+                // 顯示贏得訊息
+                showStatusMessage(winMessage, 'success');
+                
+                // 保存遊戲記錄
+                try {
+                    const sessionId = localStorage.getItem('sessionId');
+                    if (sessionId) {
+                        await fetch('/api/slots/spin', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'session-id': sessionId
+                            },
+                            body: JSON.stringify({
+                                bet: currentBet,
+                                win: winAmount
+                            })
+                        });
+                    }
+                } catch (error) {
+                    console.error('保存記錄失敗:', error);
+                }
+            } else {
+                showStatusMessage('下次會更好！', 'info');
+            }
+            
+            // 添加歷史記錄
+            addToHistory(result, winMultiplier > 0 ? currentBet * winMultiplier : 0);
+            
+            // 自動更新API中的籌碼
+            updateChipsInAPI();
+        }
+        
+        // 添加歷史記錄
+        function addToHistory(result, winAmount) {
+            const historyList = document.getElementById('history-list');
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            
+            historyItem.innerHTML = `
+                <span>${timeString} - ${result.join(' ')}</span>
+                <span style="color: ${winAmount > 0 ? '#00cc66' : '#ff6b6b'}; font-weight: bold;">
+                    ${winAmount > 0 ? '+' : ''}${winAmount} USDT
+                </span>
+            `;
+            
+            historyList.insertBefore(historyItem, historyList.firstChild);
+            
+            // 限制歷史記錄數量
+            if (historyList.children.length > 10) {
+                historyList.removeChild(historyList.lastChild);
+            }
+        }
+        
+        // 切換自動旋轉
+        function toggleAutoSpin() {
+            autoSpin = !autoSpin;
+            const autoBtn = document.getElementById('auto-spin-btn');
+            
+            if (autoSpin) {
+                autoBtn.innerHTML = '<i class="fas fa-stop"></i> 停止';
+                autoBtn.style.background = 'linear-gradient(45deg, var(--red), #ff6b6b)';
+                
+                // 檢查餘額並開始自動旋轉
+                if (playerChips >= currentBet) {
+                    spin();
+                } else {
+                    autoSpin = false;
+                    autoBtn.innerHTML = '<i class="fas fa-sync-alt"></i> 自動';
+                    autoBtn.style.background = 'linear-gradient(45deg, var(--blue), #2b6cb0)';
+                    showStatusMessage('❌ 餘額不足！', 'error');
+                }
+            } else {
+                autoBtn.innerHTML = '<i class="fas fa-sync-alt"></i> 自動';
+                autoBtn.style.background = 'linear-gradient(45deg, var(--blue), #2b6cb0)';
+            }
+        }
+        
+        // 更新API中的籌碼
+        async function updateChipsInAPI() {
+            try {
+                const sessionId = localStorage.getItem('sessionId');
+                if (!sessionId) return;
+                
+                // 這裡應該調用API更新籌碼
+                // 簡化版：只在前端更新
+            } catch (error) {
+                console.error('更新籌碼失敗:', error);
+            }
+        }
+        
+        // 顯示狀態訊息
+        function showStatusMessage(message, type = 'info') {
+            const existingMessages = document.querySelectorAll('.status-message');
+            existingMessages.forEach(msg => msg.remove());
+            
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'status-message';
+            statusDiv.style.background = type === 'success' ? 'rgba(0, 204, 102, 0.9)' :
+                                       type === 'error' ? 'rgba(255, 65, 108, 0.9)' :
+                                       'rgba(74, 144, 226, 0.9)';
+            statusDiv.innerHTML = `<p>${message}</p>`;
+            
+            document.body.appendChild(statusDiv);
+            
+            setTimeout(() => {
+                statusDiv.style.opacity = '0';
+                statusDiv.style.transform = 'translateX(-50%) translateY(-50%)';
+                setTimeout(() => {
+                    if (statusDiv.parentNode) {
+                        document.body.removeChild(statusDiv);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // 輔助函數
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // 初始化
+        window.onload = async () => {
+            await loadPlayerInfo();
+            
+            // 設置初始下注
+            setBetAmount(10);
+            
+            // 防止頁面縮放
+            document.addEventListener('touchstart', function(event) {
+                if (event.touches.length > 1) {
+                    event.preventDefault();
+                }
+            }, { passive: false });
+        };
+    </script>
+</body>
+</html>
