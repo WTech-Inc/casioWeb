@@ -1073,37 +1073,41 @@
         let selectedEmojis = [];
         
         // 檢查管理員登入狀態
-        async function checkAdminAuth() {
-            try {
-                showLoading();
-                const sessionId = localStorage.getItem('sessionId');
-                if (!sessionId) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                const response = await fetch('/api/admin/check', {
-                    headers: { 'session-id': sessionId }
-                });
-                
-                const data = await response.json();
-                
-                if (!data.success || !data.isAdmin) {
-                    window.location.href = 'index.html';
-                    return;
-                }
-                
-                currentAdmin = data.user;
-                document.getElementById('admin-name').textContent = currentAdmin.username;
-                
-                // 載入預設頁面
-                await showDashboard();
-                hideLoading();
-            } catch (error) {
-                console.error('驗證失敗:', error);
-                window.location.href = 'login.html';
-            }
+        // 替換 admin.html 中的 checkAdminAuth 函數：
+async function checkAdminAuth() {
+    try {
+        showLoading();
+        const sessionId = localStorage.getItem('sessionId');
+        
+        if (!sessionId) {
+            // 重導到首頁，讓使用者從那裡登入
+            window.location.href = '/';
+            return;
         }
+        
+        // 直接使用 validateSession 的邏輯
+        const response = await fetch('/api/auth/profile', {
+            headers: { 'session-id': sessionId }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.authenticated && data.user.is_admin) {
+            currentAdmin = data.user;
+            document.getElementById('admin-name').textContent = currentAdmin.username;
+            
+            // 載入預設頁面
+            await showDashboard();
+            hideLoading();
+        } else {
+            // 不是管理員或未登入
+            window.location.href = '/';
+        }
+    } catch (error) {
+        console.error('驗證失敗:', error);
+        window.location.href = '/';
+    }
+}
         
         // 登出
         function logout() {
