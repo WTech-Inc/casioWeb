@@ -34,26 +34,28 @@ class SQLiteAuthDatabase {
     
     async createTables() {
         return new Promise((resolve, reject) => {
-            // 1. 使用者表格
-            this.db.run(`
-                CREATE TABLE IF NOT EXISTS users (
-                    player_id TEXT PRIMARY KEY,
-                    username TEXT UNIQUE NOT NULL,
-                    password_hash TEXT NOT NULL,
-                    salt TEXT NOT NULL,
-                    chips INTEGER DEFAULT 1000,
-                    wins INTEGER DEFAULT 0,
-                    losses INTEGER DEFAULT 0,
-                    total_bet INTEGER DEFAULT 0,
-                    is_admin BOOLEAN DEFAULT 0,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    last_login DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            `, (err) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
+            this.db.serialize(() => {
+                // 1. 使用者表格
+                this.db.run(`
+                    CREATE TABLE IF NOT EXISTS users (
+                        player_id TEXT PRIMARY KEY,
+                        username TEXT UNIQUE NOT NULL,
+                        password_hash TEXT NOT NULL,
+                        salt TEXT NOT NULL,
+                        chips INTEGER DEFAULT 1000,
+                        wins INTEGER DEFAULT 0,
+                        losses INTEGER DEFAULT 0,
+                        total_bet INTEGER DEFAULT 0,
+                        is_admin BOOLEAN DEFAULT 0,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        last_login DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                `, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                });
                 
                 // 2. 登入會話表格
                 this.db.run(`
@@ -71,68 +73,110 @@ class SQLiteAuthDatabase {
                         reject(err);
                         return;
                     }
+                });
+                
+                // 3. 遊戲歷史表格
+                this.db.run(`
+                    CREATE TABLE IF NOT EXISTS game_history (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        player_id TEXT NOT NULL,
+                        game_type TEXT NOT NULL,
+                        bet_amount INTEGER NOT NULL,
+                        win_amount INTEGER NOT NULL,
+                        result TEXT NOT NULL,
+                        details TEXT,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (player_id) REFERENCES users(player_id) ON DELETE CASCADE
+                    )
+                `, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                });
+                
+                // 4. 充值訂單表格
+                this.db.run(`
+                    CREATE TABLE IF NOT EXISTS deposit_orders (
+                        order_id TEXT PRIMARY KEY,
+                        player_id TEXT NOT NULL,
+                        amount INTEGER NOT NULL,
+                        bonus INTEGER DEFAULT 0,
+                        total_amount INTEGER NOT NULL,
+                        payment_method TEXT NOT NULL,
+                        wallet_address TEXT,
+                        status TEXT DEFAULT 'pending',
+                        notes TEXT,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        expires_at DATETIME NOT NULL,
+                        completed_at DATETIME,
+                        FOREIGN KEY (player_id) REFERENCES users(player_id) ON DELETE CASCADE
+                    )
+                `, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                });
+                
+                // 5. 系統設置表格
+                this.db.run(`
+                    CREATE TABLE IF NOT EXISTS system_settings (
+                        key TEXT PRIMARY KEY,
+                        value TEXT NOT NULL,
+                        description TEXT,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                `, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                });
+                
+                // 6. 遊戲設定表格
+                this.db.run(`
+                    CREATE TABLE IF NOT EXISTS game_settings (
+                        game_id TEXT PRIMARY KEY,
+                        game_name TEXT NOT NULL,
+                        win_rate DECIMAL(5,2) DEFAULT 45.00,
+                        volatility DECIMAL(5,2) DEFAULT 50.00,
+                        min_bet INTEGER DEFAULT 10,
+                        max_bet INTEGER DEFAULT 1000,
+                        jackpot_chance DECIMAL(5,2) DEFAULT 0.10,
+                        is_active BOOLEAN DEFAULT 1,
+                        description TEXT,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                `, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                });
+                
+                // 7. 公共圖標設定表格
+                this.db.run(`
+                    CREATE TABLE IF NOT EXISTS public_icons (
+                        icon_id TEXT PRIMARY KEY,
+                        icon_name TEXT NOT NULL,
+                        icon_code TEXT NOT NULL,
+                        category TEXT,
+                        is_active BOOLEAN DEFAULT 1,
+                        sort_order INTEGER DEFAULT 0,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                `, (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
                     
-                    // 3. 遊戲歷史表格
-                    this.db.run(`
-                        CREATE TABLE IF NOT EXISTS game_history (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            player_id TEXT NOT NULL,
-                            game_type TEXT NOT NULL,
-                            bet_amount INTEGER NOT NULL,
-                            win_amount INTEGER NOT NULL,
-                            result TEXT NOT NULL,
-                            details TEXT,
-                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                            FOREIGN KEY (player_id) REFERENCES users(player_id) ON DELETE CASCADE
-                        )
-                    `, (err) => {
-                        if (err) {
-                            reject(err);
-                            return;
-                        }
-                        
-                        // 4. 充值訂單表格
-                        this.db.run(`
-                            CREATE TABLE IF NOT EXISTS deposit_orders (
-                                order_id TEXT PRIMARY KEY,
-                                player_id TEXT NOT NULL,
-                                amount INTEGER NOT NULL,
-                                bonus INTEGER DEFAULT 0,
-                                total_amount INTEGER NOT NULL,
-                                payment_method TEXT NOT NULL,
-                                wallet_address TEXT,
-                                status TEXT DEFAULT 'pending',
-                                notes TEXT,
-                                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                expires_at DATETIME NOT NULL,
-                                completed_at DATETIME,
-                                FOREIGN KEY (player_id) REFERENCES users(player_id) ON DELETE CASCADE
-                            )
-                        `, (err) => {
-                            if (err) {
-                                reject(err);
-                                return;
-                            }
-                            
-                            // 5. 系統設置表格
-                            this.db.run(`
-                                CREATE TABLE IF NOT EXISTS system_settings (
-                                    key TEXT PRIMARY KEY,
-                                    value TEXT NOT NULL,
-                                    description TEXT,
-                                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                                )
-                            `, (err) => {
-                                if (err) {
-                                    reject(err);
-                                    return;
-                                }
-                                
-                                // 建立預設管理員帳號
-                                this.createDefaultAdmin().then(resolve).catch(reject);
-                            });
-                        });
-                    });
+                    // 建立預設管理員帳號
+                    this.createDefaultAdmin().then(() => {
+                        // 建立預設遊戲設定
+                        this.createDefaultGameSettings().then(resolve).catch(reject);
+                    }).catch(reject);
                 });
             });
         });
@@ -181,6 +225,98 @@ class SQLiteAuthDatabase {
         });
     }
     
+    // 建立預設遊戲設定
+    async createDefaultGameSettings() {
+        const defaultGames = [
+            {
+                game_id: 'baccarat',
+                game_name: '開心百家樂',
+                win_rate: 45.0,
+                volatility: 50.0,
+                min_bet: 50,
+                max_bet: 5000,
+                jackpot_chance: 0.5,
+                description: '經典卡牌遊戲，莊家抽水 5%，和局 1:8'
+            },
+            {
+                game_id: 'slots',
+                game_name: '幸運老虎機',
+                win_rate: 48.0,
+                volatility: 60.0,
+                min_bet: 10,
+                max_bet: 1000,
+                jackpot_chance: 0.3,
+                description: '簡單刺激的拉霸遊戲，三個鑽石贏得 30 倍獎勵'
+            },
+            {
+                game_id: 'blackjack',
+                game_name: '21點',
+                win_rate: 46.5,
+                volatility: 40.0,
+                min_bet: 20,
+                max_bet: 2000,
+                jackpot_chance: 0.2,
+                description: '考驗技術與策略的撲克遊戲'
+            },
+            {
+                game_id: 'roulette',
+                game_name: '輪盤賭',
+                win_rate: 47.0,
+                volatility: 70.0,
+                min_bet: 5,
+                max_bet: 500,
+                jackpot_chance: 0.1,
+                description: '經典輪盤遊戲，36 倍超高賠率'
+            }
+        ];
+        
+        for (const game of defaultGames) {
+            try {
+                await this.runQuery(
+                    `INSERT OR IGNORE INTO game_settings 
+                     (game_id, game_name, win_rate, volatility, min_bet, max_bet, jackpot_chance, description) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [game.game_id, game.game_name, game.win_rate, game.volatility, 
+                     game.min_bet, game.max_bet, game.jackpot_chance, game.description]
+                );
+            } catch (error) {
+                console.error(`建立遊戲設定失敗 ${game.game_id}:`, error);
+            }
+        }
+        
+        // 建立預設圖標
+        const defaultIcons = [
+            { icon_id: 'chip', icon_name: '籌碼', icon_code: '💰', category: 'general' },
+            { icon_id: 'diamond', icon_name: '鑽石', icon_code: '💎', category: 'general' },
+            { icon_id: 'money', icon_name: '金錢', icon_code: '💵', category: 'general' },
+            { icon_id: 'coin', icon_name: '硬幣', icon_code: '🪙', category: 'general' },
+            { icon_id: 'cherry', icon_name: '櫻桃', icon_code: '🍒', category: 'slots' },
+            { icon_id: 'lemon', icon_name: '檸檬', icon_code: '🍋', category: 'slots' },
+            { icon_id: 'star', icon_name: '星星', icon_code: '⭐', category: 'slots' },
+            { icon_id: 'bell', icon_name: '鈴鐺', icon_code: '🔔', category: 'slots' },
+            { icon_id: 'seven', icon_name: '七', icon_code: '7️⃣', category: 'slots' },
+            { icon_id: 'card', icon_name: '撲克牌', icon_code: '🃏', category: 'cards' },
+            { icon_id: 'dice', icon_name: '骰子', icon_code: '🎲', category: 'dice' },
+            { icon_id: 'slot', icon_name: '老虎機', icon_code: '🎰', category: 'slots' },
+            { icon_id: 'trophy', icon_name: '獎杯', icon_code: '🏆', category: 'general' },
+            { icon_id: 'crown', icon_name: '皇冠', icon_code: '👑', category: 'general' },
+            { icon_id: 'fire', icon_name: '火焰', icon_code: '🔥', category: 'general' }
+        ];
+        
+        for (const [index, icon] of defaultIcons.entries()) {
+            try {
+                await this.runQuery(
+                    `INSERT OR IGNORE INTO public_icons 
+                     (icon_id, icon_name, icon_code, category, sort_order) 
+                     VALUES (?, ?, ?, ?, ?)`,
+                    [icon.icon_id, icon.icon_name, icon.icon_code, icon.category, index]
+                );
+            } catch (error) {
+                console.error(`建立圖標失敗 ${icon.icon_id}:`, error);
+            }
+        }
+    }
+    
     // 🔄 重置資料庫
     async resetDatabase() {
         return new Promise((resolve, reject) => {
@@ -189,6 +325,8 @@ class SQLiteAuthDatabase {
                 this.db.run('DROP TABLE IF EXISTS deposit_orders');
                 this.db.run('DROP TABLE IF EXISTS sessions');
                 this.db.run('DROP TABLE IF EXISTS system_settings');
+                this.db.run('DROP TABLE IF EXISTS game_settings');
+                this.db.run('DROP TABLE IF EXISTS public_icons');
                 this.db.run('DROP TABLE IF EXISTS users');
                 
                 this.createTables().then(() => {
@@ -557,6 +695,126 @@ class SQLiteAuthDatabase {
         });
     }
     
+    // 🎮 取得遊戲設定
+    async getGameSettings(gameId = null) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                if (gameId) {
+                    const game = await this.getQuery(
+                        'SELECT * FROM game_settings WHERE game_id = ?',
+                        [gameId]
+                    );
+                    resolve(game);
+                } else {
+                    const games = await this.allQuery(
+                        'SELECT * FROM game_settings ORDER BY game_name'
+                    );
+                    resolve(games);
+                }
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+    
+    // 🎮 更新遊戲設定
+    async updateGameSettings(gameId, settings) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const { win_rate, volatility, min_bet, max_bet, jackpot_chance, is_active } = settings;
+                
+                await this.runQuery(
+                    `UPDATE game_settings 
+                     SET win_rate = ?, volatility = ?, min_bet = ?, max_bet = ?, 
+                         jackpot_chance = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP 
+                     WHERE game_id = ?`,
+                    [win_rate, volatility, min_bet, max_bet, jackpot_chance, is_active, gameId]
+                );
+                
+                const updated = await this.getQuery(
+                    'SELECT * FROM game_settings WHERE game_id = ?',
+                    [gameId]
+                );
+                resolve(updated);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+    
+    // 🎯 取得公共圖標
+    async getPublicIcons(category = null) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let query = 'SELECT * FROM public_icons WHERE is_active = 1';
+                const params = [];
+                
+                if (category) {
+                    query += ' AND category = ?';
+                    params.push(category);
+                }
+                
+                query += ' ORDER BY sort_order, icon_name';
+                
+                const icons = await this.allQuery(query, params);
+                resolve(icons);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+    
+    // 🎯 更新圖標
+    async updateIcon(iconId, data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const { icon_name, icon_code, category, sort_order, is_active } = data;
+                
+                await this.runQuery(
+                    `UPDATE public_icons 
+                     SET icon_name = ?, icon_code = ?, category = ?, sort_order = ?, is_active = ?
+                     WHERE icon_id = ?`,
+                    [icon_name, icon_code, category, sort_order, is_active, iconId]
+                );
+                
+                resolve(true);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+    
+    // 🎯 新增圖標
+    async addIcon(data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const { icon_id, icon_name, icon_code, category } = data;
+                
+                await this.runQuery(
+                    `INSERT INTO public_icons (icon_id, icon_name, icon_code, category) 
+                     VALUES (?, ?, ?, ?)`,
+                    [icon_id, icon_name, icon_code, category]
+                );
+                
+                resolve(true);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+    
+    // 🎯 刪除圖標
+    async deleteIcon(iconId) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.runQuery('DELETE FROM public_icons WHERE icon_id = ?', [iconId]);
+                resolve(true);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+    
     // 🛡️ 移除敏感資訊
     sanitizeUser(user) {
         if (!user) return null;
@@ -592,261 +850,6 @@ class SQLiteAuthDatabase {
             });
         });
     }
-    // 在 createTables 函數中，加入遊戲設定表格：
-
-// 6. 遊戲設定表格
-this.db.run(`
-    CREATE TABLE IF NOT EXISTS game_settings (
-        game_id TEXT PRIMARY KEY,
-        game_name TEXT NOT NULL,
-        win_rate DECIMAL(5,2) DEFAULT 45.00,
-        volatility DECIMAL(5,2) DEFAULT 50.00,
-        min_bet INTEGER DEFAULT 10,
-        max_bet INTEGER DEFAULT 1000,
-        jackpot_chance DECIMAL(5,2) DEFAULT 0.10,
-        is_active BOOLEAN DEFAULT 1,
-        description TEXT,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-`, (err) => {
-    if (err) {
-        reject(err);
-        return;
-    }
-    
-    // 7. 公共圖標設定表格
-    this.db.run(`
-        CREATE TABLE IF NOT EXISTS public_icons (
-            icon_id TEXT PRIMARY KEY,
-            icon_name TEXT NOT NULL,
-            icon_code TEXT NOT NULL,
-            category TEXT,
-            is_active BOOLEAN DEFAULT 1,
-            sort_order INTEGER DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    `, (err) => {
-        if (err) {
-            reject(err);
-            return;
-        }
-        
-        // 建立預設遊戲設定
-        this.createDefaultGameSettings().then(resolve).catch(reject);
-    });
-});
-
-// 新增函數：建立預設遊戲設定
-async createDefaultGameSettings() {
-    const defaultGames = [
-        {
-            game_id: 'baccarat',
-            game_name: '開心百家樂',
-            win_rate: 45.0,
-            volatility: 50.0,
-            min_bet: 50,
-            max_bet: 5000,
-            jackpot_chance: 0.5,
-            description: '經典卡牌遊戲，莊家抽水 5%，和局 1:8'
-        },
-        {
-            game_id: 'slots',
-            game_name: '幸運老虎機',
-            win_rate: 48.0,
-            volatility: 60.0,
-            min_bet: 10,
-            max_bet: 1000,
-            jackpot_chance: 0.3,
-            description: '簡單刺激的拉霸遊戲，三個鑽石贏得 30 倍獎勵'
-        },
-        {
-            game_id: 'blackjack',
-            game_name: '21點',
-            win_rate: 46.5,
-            volatility: 40.0,
-            min_bet: 20,
-            max_bet: 2000,
-            jackpot_chance: 0.2,
-            description: '考驗技術與策略的撲克遊戲'
-        },
-        {
-            game_id: 'roulette',
-            game_name: '輪盤賭',
-            win_rate: 47.0,
-            volatility: 70.0,
-            min_bet: 5,
-            max_bet: 500,
-            jackpot_chance: 0.1,
-            description: '經典輪盤遊戲，36 倍超高賠率'
-        }
-    ];
-    
-    for (const game of defaultGames) {
-        try {
-            await this.runQuery(
-                `INSERT OR IGNORE INTO game_settings 
-                 (game_id, game_name, win_rate, volatility, min_bet, max_bet, jackpot_chance, description) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [game.game_id, game.game_name, game.win_rate, game.volatility, 
-                 game.min_bet, game.max_bet, game.jackpot_chance, game.description]
-            );
-        } catch (error) {
-            console.error(`建立遊戲設定失敗 ${game.game_id}:`, error);
-        }
-    }
-    
-    // 建立預設圖標
-    const defaultIcons = [
-        { icon_id: 'chip', icon_name: '籌碼', icon_code: '💰', category: 'general' },
-        { icon_id: 'diamond', icon_name: '鑽石', icon_code: '💎', category: 'general' },
-        { icon_id: 'money', icon_name: '金錢', icon_code: '💵', category: 'general' },
-        { icon_id: 'coin', icon_name: '硬幣', icon_code: '🪙', category: 'general' },
-        { icon_id: 'cherry', icon_name: '櫻桃', icon_code: '🍒', category: 'slots' },
-        { icon_id: 'lemon', icon_name: '檸檬', icon_code: '🍋', category: 'slots' },
-        { icon_id: 'star', icon_name: '星星', icon_code: '⭐', category: 'slots' },
-        { icon_id: 'bell', icon_name: '鈴鐺', icon_code: '🔔', category: 'slots' },
-        { icon_id: 'seven', icon_name: '七', icon_code: '7️⃣', category: 'slots' },
-        { icon_id: 'card', icon_name: '撲克牌', icon_code: '🃏', category: 'cards' },
-        { icon_id: 'dice', icon_name: '骰子', icon_code: '🎲', category: 'dice' },
-        { icon_id: 'slot', icon_name: '老虎機', icon_code: '🎰', category: 'slots' },
-        { icon_id: 'trophy', icon_name: '獎杯', icon_code: '🏆', category: 'general' },
-        { icon_id: 'crown', icon_name: '皇冠', icon_code: '👑', category: 'general' },
-        { icon_id: 'fire', icon_name: '火焰', icon_code: '🔥', category: 'general' }
-    ];
-    
-    for (const [index, icon] of defaultIcons.entries()) {
-        try {
-            await this.runQuery(
-                `INSERT OR IGNORE INTO public_icons 
-                 (icon_id, icon_name, icon_code, category, sort_order) 
-                 VALUES (?, ?, ?, ?, ?)`,
-                [icon.icon_id, icon.icon_name, icon.icon_code, icon.category, index]
-            );
-        } catch (error) {
-            console.error(`建立圖標失敗 ${icon.icon_id}:`, error);
-        }
-    }
-}
-
-// 新增函數：取得遊戲設定
-async getGameSettings(gameId = null) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            if (gameId) {
-                const game = await this.getQuery(
-                    'SELECT * FROM game_settings WHERE game_id = ?',
-                    [gameId]
-                );
-                resolve(game);
-            } else {
-                const games = await this.allQuery(
-                    'SELECT * FROM game_settings ORDER BY game_name'
-                );
-                resolve(games);
-            }
-        } catch (error) {
-            reject(error);
-        }
-    });
-}
-
-// 新增函數：更新遊戲設定
-async updateGameSettings(gameId, settings) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const { win_rate, volatility, min_bet, max_bet, jackpot_chance, is_active } = settings;
-            
-            await this.runQuery(
-                `UPDATE game_settings 
-                 SET win_rate = ?, volatility = ?, min_bet = ?, max_bet = ?, 
-                     jackpot_chance = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP 
-                 WHERE game_id = ?`,
-                [win_rate, volatility, min_bet, max_bet, jackpot_chance, is_active, gameId]
-            );
-            
-            const updated = await this.getQuery(
-                'SELECT * FROM game_settings WHERE game_id = ?',
-                [gameId]
-            );
-            resolve(updated);
-        } catch (error) {
-            reject(error);
-        }
-    });
-}
-
-// 新增函數：取得公共圖標
-async getPublicIcons(category = null) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            let query = 'SELECT * FROM public_icons WHERE is_active = 1';
-            const params = [];
-            
-            if (category) {
-                query += ' AND category = ?';
-                params.push(category);
-            }
-            
-            query += ' ORDER BY sort_order, icon_name';
-            
-            const icons = await this.allQuery(query, params);
-            resolve(icons);
-        } catch (error) {
-            reject(error);
-        }
-    });
-}
-
-// 新增函數：更新圖標
-async updateIcon(iconId, data) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const { icon_name, icon_code, category, sort_order, is_active } = data;
-            
-            await this.runQuery(
-                `UPDATE public_icons 
-                 SET icon_name = ?, icon_code = ?, category = ?, sort_order = ?, is_active = ?
-                 WHERE icon_id = ?`,
-                [icon_name, icon_code, category, sort_order, is_active, iconId]
-            );
-            
-            resolve(true);
-        } catch (error) {
-            reject(error);
-        }
-    });
-}
-
-// 新增函數：新增圖標
-async addIcon(data) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const { icon_id, icon_name, icon_code, category } = data;
-            
-            await this.runQuery(
-                `INSERT INTO public_icons (icon_id, icon_name, icon_code, category) 
-                 VALUES (?, ?, ?, ?)`,
-                [icon_id, icon_name, icon_code, category]
-            );
-            
-            resolve(true);
-        } catch (error) {
-            reject(error);
-        }
-    });
-}
-
-// 新增函數：刪除圖標
-async deleteIcon(iconId) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            await this.runQuery('DELETE FROM public_icons WHERE icon_id = ?', [iconId]);
-            resolve(true);
-        } catch (error) {
-            reject(error);
-        }
-    });
-}
 }
 
 // 匯出單例
