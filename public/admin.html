@@ -8,72 +8,36 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; }
-        
-        /* 側邊欄漸層 */
-        .sidebar-gradient { background: linear-gradient(180deg, #0f172a 0%, #020617 100%); }
-        
-        /* 玻璃擬態卡片 */
-        .glass-card { 
-            background: rgba(30, 41, 59, 0.4); 
-            backdrop-filter: blur(12px); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            transition: transform 0.2s ease;
-        }
-        .glass-card:hover { transform: translateY(-4px); border-color: rgba(56, 189, 248, 0.3); }
-
-        /* 圖表容器固定高度防止 Pattern 錯誤 */
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; color: #f8fafc; }
+        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
         .chart-container { position: relative; height: 350px; width: 100%; }
-        
-        /* 自定義捲軸 */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        .loader { border: 3px solid rgba(56, 189, 248, 0.2); border-top: 3px solid #38bdf8; border-radius: 50%; width: 24px; height: 24px; animate: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="flex h-screen text-slate-200 overflow-hidden">
+<body class="flex h-screen overflow-hidden">
 
-    <aside class="w-72 sidebar-gradient border-r border-slate-800 flex flex-col">
-        <div class="p-8">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-sky-500 rounded-lg shadow-lg shadow-sky-500/20"></div>
-                <h1 class="text-xl font-bold tracking-tight text-white">控制中心</h1>
-            </div>
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col">
+        <div class="p-6 text-xl font-bold text-sky-400 flex items-center">
+            <span class="mr-2">🔧</span> 管理中心
         </div>
-        
         <nav class="flex-1 px-4 space-y-2">
-            <button onclick="fetchDashboardStats()" class="w-full flex items-center px-4 py-3 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                <span class="mr-3 text-lg">📊</span> 數據總覽
-            </button>
-            <button class="w-full flex items-center px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-800/50 transition cursor-not-allowed">
-                <span class="mr-3 text-lg">👥</span> 玩家管理
-            </button>
-            <button class="w-full flex items-center px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-800/50 transition cursor-not-allowed">
-                <span class="mr-3 text-lg">⚙️</span> 系統設定
-            </button>
+            <button onclick="loadDashboard()" class="w-full text-left px-4 py-3 rounded-xl bg-sky-500/10 text-sky-400">📊 儀表板總覽</button>
+            <button class="w-full text-left px-4 py-3 rounded-xl text-slate-500 cursor-not-allowed">👥 玩家管理</button>
         </nav>
-
-        <div class="p-6 border-t border-slate-800">
-            <button onclick="location.href='/logout'" class="w-full py-3 rounded-xl bg-rose-500/10 text-rose-500 font-semibold hover:bg-rose-500 hover:text-white transition duration-300">
-                登出系統
-            </button>
-        </div>
     </aside>
 
-    <main class="flex-1 flex flex-col bg-[#020617]">
-        <header class="h-20 flex items-center justify-between px-10 border-b border-slate-800/50 bg-[#020617]/80 backdrop-blur-md z-10">
-            <div>
-                <h2 class="text-2xl font-bold text-white">數據統計</h2>
-                <p class="text-slate-500 text-sm">歡迎回來，管理員</p>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="h-10 w-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">👤</div>
-            </div>
+    <main class="flex-1 flex flex-col">
+        <header class="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-900/50">
+            <div class="text-lg font-semibold" id="page-title">數據統計</div>
+            <div id="auth-status" class="text-sm text-slate-400">檢查權限中...</div>
         </header>
 
-        <div id="content-area" class="flex-1 overflow-y-auto p-10">
-            <div class="flex flex-col items-center justify-center h-64 space-y-4">
-                <div class="w-12 h-12 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
-                <p class="text-slate-400 animate-pulse">正在獲取實時數據...</p>
+        <div id="content-area" class="flex-1 overflow-y-auto p-8">
+            <div id="loading-state" class="flex flex-col items-center justify-center h-64 space-y-4">
+                <div class="loader"></div>
+                <p class="text-slate-400">正在獲取實時數據...</p>
+                <p id="debug-info" class="text-xs text-slate-600 font-mono"></p>
             </div>
         </div>
     </main>
@@ -81,119 +45,102 @@
     <div id="toast-container" class="fixed top-6 right-6 z-50"></div>
 
     <script>
-        // 1. 數據格式化工具
-        const formatMoney = (n) => new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 }).format(n);
-        const formatCompact = (n) => new Intl.NumberFormat('zh-TW', { notation: 'compact' }).format(n);
+        // 🛠️ 設定區：確保這裡的路徑跟 index.js 裡 router.get 的一致
+        const API_PATH = '/api/admin/dashboard'; 
 
-        // 2. 獲取數據 (串接原本的 API)
-        async function fetchDashboardStats() {
+        // 1. 取得 SessionID (從 Cookie 或 LocalStorage)
+        function getSessionId() {
+            return localStorage.getItem('sessionId') || ''; 
+        }
+
+        // 2. 獲取數據
+        async function loadDashboard() {
+            const debug = document.getElementById('debug-info');
+            debug.innerText = `正在請求: ${API_PATH}...`;
+
             try {
-                const response = await fetch('/api/admin/stats');
+                const response = await fetch(API_PATH, {
+                    headers: { 'session-id': getSessionId() }
+                });
+
+                // 如果 401 或 403，代表沒登入
+                if (response.status === 401 || response.status === 403) {
+                    document.getElementById('content-area').innerHTML = `
+                        <div class="bg-rose-500/10 border border-rose-500/20 p-6 rounded-2xl text-center">
+                            <p class="text-rose-500 font-bold">❌ 權限不足</p>
+                            <p class="text-slate-400 mt-2">請先以管理員帳號登入系統</p>
+                            <button onclick="window.location.href='/login.html'" class="mt-4 px-4 py-2 bg-rose-500 rounded-lg">前往登入</button>
+                        </div>`;
+                    return;
+                }
+
                 const data = await response.json();
                 
                 if (data.success) {
                     renderDashboard(data.stats);
+                    document.getElementById('auth-status').innerText = '管理員連線中';
                 } else {
-                    showToast('獲取失敗: ' + data.message, 'error');
+                    throw new Error(data.error || '未知錯誤');
                 }
             } catch (error) {
-                console.error('Fetch Error:', error);
-                showToast('伺服器連線異常', 'error');
+                console.error('API Error:', error);
+                debug.innerText = `錯誤原因: ${error.message}`;
+                showToast('資料載入失敗: ' + error.message, 'error');
             }
         }
 
-        // 3. 渲染儀表板 (修正 Pattern 錯誤關鍵點)
+        // 3. 渲染 UI
         function renderDashboard(stats) {
             const container = document.getElementById('content-area');
             container.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
                     <div class="glass-card p-8 rounded-3xl">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-slate-400 font-semibold mb-1">今日總營收</p>
-                                <h3 class="text-4xl font-bold text-emerald-400">${formatMoney(stats.todayRevenue)}</h3>
-                            </div>
-                            <div class="p-3 bg-emerald-500/10 rounded-2xl text-2xl text-emerald-500">💰</div>
-                        </div>
+                        <p class="text-slate-400 text-sm mb-1">總玩家數</p>
+                        <h3 class="text-4xl font-bold text-sky-400">${stats.totalPlayers || 0}</h3>
                     </div>
                     <div class="glass-card p-8 rounded-3xl">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-slate-400 font-semibold mb-1">活躍用戶</p>
-                                <h3 class="text-4xl font-bold text-sky-400">${formatCompact(stats.totalPlayers)}</h3>
-                            </div>
-                            <div class="p-3 bg-sky-500/10 rounded-2xl text-2xl text-sky-500">⚡</div>
-                        </div>
+                        <p class="text-slate-400 text-sm mb-1">今日流水</p>
+                        <h3 class="text-4xl font-bold text-emerald-400">$${stats.todayRevenue || 0}</h3>
                     </div>
                 </div>
-
                 <div class="glass-card p-8 rounded-3xl">
-                    <h3 class="text-xl font-bold text-white mb-8 flex items-center">
-                        <span class="w-2 h-6 bg-sky-500 rounded-full mr-3"></span>
-                        近七日營收趨勢
-                    </h3>
-                    <div class="chart-container">
-                        <canvas id="mainChart"></canvas>
-                    </div>
+                    <h3 class="font-bold mb-6">營收趨勢</h3>
+                    <div class="chart-container"><canvas id="revenueChart"></canvas></div>
                 </div>
             `;
-
-            // 使用 requestAnimationFrame 確保 Canvas 已經出現在 DOM 樹
+            
             window.requestAnimationFrame(() => initChart(stats.revenueHistory || []));
         }
 
-        // 4. 初始化圖表
         function initChart(history) {
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if (window.dashboardChart) window.dashboardChart.destroy();
-
-            window.dashboardChart = new Chart(ctx, {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: history.map(d => d.date),
+                    labels: history.map(h => h.date || ''),
                     datasets: [{
                         label: '營收',
-                        data: history.map(d => d.amount),
+                        data: history.map(h => h.amount || 0),
                         borderColor: '#38bdf8',
-                        borderWidth: 4,
-                        pointBackgroundColor: '#38bdf8',
-                        pointRadius: 5,
+                        tension: 0.4,
                         fill: true,
-                        backgroundColor: (context) => {
-                            const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, 400);
-                            gradient.addColorStop(0, 'rgba(56, 189, 248, 0.2)');
-                            gradient.addColorStop(1, 'rgba(56, 189, 248, 0)');
-                            return gradient;
-                        },
-                        tension: 0.4
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)'
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
-                        x: { grid: { display: false }, ticks: { color: '#64748b' } }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        // 5. 通知系統
         function showToast(msg, type = 'info') {
             const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            const color = type === 'error' ? 'border-rose-500 bg-rose-500/10 text-rose-500' : 'border-sky-500 bg-sky-500/10 text-sky-500';
-            toast.className = `px-6 py-4 rounded-2xl border ${color} shadow-2xl mb-4 transform transition-all duration-300 translate-x-12 opacity-0`;
-            toast.innerText = msg;
-            container.appendChild(toast);
-            setTimeout(() => { toast.classList.remove('translate-x-12', 'opacity-0'); }, 10);
-            setTimeout(() => { toast.classList.add('translate-x-12', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
+            const div = document.createElement('div');
+            div.className = `px-6 py-3 rounded-xl mb-2 ${type === 'error' ? 'bg-rose-500' : 'bg-sky-600'}`;
+            div.innerText = msg;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
         }
 
-        // 頁面初次載入
-        document.addEventListener('DOMContentLoaded', fetchDashboardStats);
+        document.addEventListener('DOMContentLoaded', loadDashboard);
     </script>
 </body>
 </html>
