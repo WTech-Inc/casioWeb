@@ -5,6 +5,7 @@ const baccaratAPI = require('./games/baccarat');
 const slotsAPI = require('./games/slots');
 const path = require("path");
 const adminAPI = require("./admin");
+const bot = require("./bot");
 
 const app = express();
 
@@ -789,5 +790,7 @@ app.get('/health', (req, res) => {
         uptime: process.uptime()
     });
 });
+// 登入 Bot
+client.login(process.env.DISCORD_TOKEN);
 
 module.exports = app;
