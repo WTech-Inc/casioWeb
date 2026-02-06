@@ -14,7 +14,7 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 app.use(cors());
 app.use(express.json());
 
-bot = new DoubaoBot();
+const bot = new DoubaoBot();
 // 優雅關閉處理
 process.on('SIGINT', () => {
     console.log('\n🛑 收到關閉信號，正在優雅關閉...');
