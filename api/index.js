@@ -5,7 +5,7 @@ const baccaratAPI = require('./games/baccarat');
 const slotsAPI = require('./games/slots');
 const path = require("path");
 const adminAPI = require("./admin");
-const bot = require("./bot");
+const DoubaoBot = require("./bot");
 
 const app = express();
 
@@ -13,6 +13,20 @@ const app = express();
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.use(cors());
 app.use(express.json());
+
+bot = DoubaoBot();
+// 優雅關閉處理
+process.on('SIGINT', () => {
+    console.log('\n🛑 收到關閉信號，正在優雅關閉...');
+    bot.shutdown();
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('\n🛑 收到終止信號，正在優雅關閉...');
+    bot.shutdown();
+    process.exit(0);
+});
 
 // 中間件：解析 cookie
 const cookieParser = require('cookie-parser');
@@ -791,6 +805,6 @@ app.get('/health', (req, res) => {
     });
 });
 // 登入 Bot
-client.login(process.env.DISCORD_TOKEN);
+bot.login(process.env.DISCORD_TOKEN);
 
 module.exports = app;
